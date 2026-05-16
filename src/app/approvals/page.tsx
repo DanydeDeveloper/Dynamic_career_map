@@ -1,0 +1,29 @@
+import { ChangeProposalCard } from "@/components/approvals/ChangeProposalCard";
+import { getPendingProposals } from "@/lib/data";
+
+export default async function ApprovalsPage() {
+  const proposals = await getPendingProposals();
+
+  return (
+    <>
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">Апрув педагога</p>
+          <h1 className="page-title">Предложения изменений</h1>
+          <p className="page-description">
+            Система может предлагать обновления профиля, насмотренности, стратегии и карты, но финальное решение
+            остается за педагогом.
+          </p>
+        </div>
+      </header>
+
+      <div className="grid">
+        {proposals.length > 0 ? (
+          proposals.map((proposal) => <ChangeProposalCard key={proposal.id} proposal={proposal} />)
+        ) : (
+          <div className="empty-state">Нет предложений, которые ждут решения.</div>
+        )}
+      </div>
+    </>
+  );
+}
