@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MessageSquarePlus } from "lucide-react";
 import { ChangeProposalCard } from "@/components/approvals/ChangeProposalCard";
-import { EventTable } from "@/components/events/EventTable";
+import { EventMapTimeline } from "@/components/events/EventMapTimeline";
 import { ProfileSummary } from "@/components/students/ProfileSummary";
 import { VisibilityBars } from "@/components/students/VisibilityBars";
 import { getStudentProfile } from "@/lib/data";
@@ -182,7 +182,7 @@ export default async function StudentPage({ params }: StudentPageProps) {
 
       <section className="section">
         <h2 className="section-title">Карта мероприятий</h2>
-        <EventTable rows={student.eventMap} />
+        <EventMapTimeline rows={student.eventMap} emptyText="В карте пока нет назначенных мероприятий." />
       </section>
 
       <section className="section">

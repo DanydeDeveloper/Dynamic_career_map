@@ -469,6 +469,104 @@ textarea {
   background: linear-gradient(90deg, #2f5363, #c8a33a);
 }
 
+.event-map {
+  display: grid;
+  gap: 18px;
+}
+
+.event-horizon {
+  display: grid;
+  gap: 12px;
+}
+
+.event-horizon-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.event-horizon-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.event-horizon-header p {
+  max-width: 720px;
+  margin: 5px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.month-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.month-group {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.month-label {
+  position: sticky;
+  top: 18px;
+  padding: 10px 0;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.event-card-list {
+  display: grid;
+  gap: 10px;
+}
+
+.event-map-card {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.event-map-date {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.event-map-date small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.event-map-content {
+  display: grid;
+  gap: 10px;
+}
+
+.event-map-content h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.event-map-content p {
+  margin: 0;
+  line-height: 1.45;
+}
+
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -681,7 +779,8 @@ textarea {
 @media (max-width: 640px) {
   .page-header,
   .student-card-top,
-  .panel-header {
+  .panel-header,
+  .event-horizon-header {
     display: grid;
   }
 
@@ -702,5 +801,15 @@ textarea {
 
   .nav-list {
     grid-template-columns: 1fr;
+  }
+
+  .month-group,
+  .event-map-card {
+    grid-template-columns: 1fr;
+  }
+
+  .month-label {
+    position: static;
+    padding: 0;
   }
 }

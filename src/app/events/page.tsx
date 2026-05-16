@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AssignEventForm } from "@/components/forms/AssignEventForm";
+import { EventMapTimeline } from "@/components/events/EventMapTimeline";
 import { EventTable } from "@/components/events/EventTable";
 import { getDashboardData, getEvents, getStudentsForForms } from "@/lib/data";
 import { canManageEvents, requireUser } from "@/lib/authz";
@@ -34,7 +35,7 @@ export default async function EventsPage() {
             students.map((student) => (
               <section className="section" key={student.id}>
                 <h2 className="section-title">{student.name}</h2>
-                <EventTable rows={student.eventMap} />
+                <EventMapTimeline rows={student.eventMap} emptyText="Пока нет назначенных мероприятий." />
               </section>
             ))
           ) : (
@@ -63,7 +64,15 @@ export default async function EventsPage() {
         </Link>
       </header>
 
-      <EventTable rows={events.map((event) => ({ event }))} />
+      <section className="section">
+        <h2 className="section-title">Календарь базы мероприятий</h2>
+        <EventMapTimeline rows={events.map((event) => ({ event }))} />
+      </section>
+
+      <section className="section">
+        <h2 className="section-title">Таблица событий</h2>
+        <EventTable rows={events.map((event) => ({ event }))} />
+      </section>
 
       <AssignEventForm students={students} events={events} />
     </>
