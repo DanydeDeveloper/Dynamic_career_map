@@ -28,10 +28,10 @@ export default async function FeedbackPage() {
     <>
       <header className="page-header">
         <div>
-          <p className="eyebrow">Фидбэк</p>
+          <p className="eyebrow">Обратная связь</p>
           <h1 className="page-title">Обратная связь после мероприятия</h1>
           <p className="page-description">
-            Форма собирает впечатления после профпробы. На основе фидбэка система создает предложения изменений, а
+            Форма собирает впечатления после профпробы. На основе обратной связи система создает предложения изменений, а
             педагог отдельно подтверждает, что попадет в профиль и карту.
           </p>
         </div>
@@ -40,7 +40,7 @@ export default async function FeedbackPage() {
       {students.length > 0 && events.length > 0 ? (
         <EventFeedbackForm students={students} events={events} />
       ) : (
-        <div className="empty-state">Пока нет доступных учеников или назначенных мероприятий для фидбэка.</div>
+        <div className="empty-state">Пока нет доступных учеников или назначенных мероприятий для обратной связи.</div>
       )}
     </>
   );

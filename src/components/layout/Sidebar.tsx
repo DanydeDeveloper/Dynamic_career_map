@@ -48,14 +48,14 @@ const navItems: NavItem[] = [
     icon: CalendarDays,
     roles: allRoles
   },
-  { href: "/feedback", label: "Фидбэк", icon: MessageSquareText, roles: allRoles },
-  { href: "/approvals", label: "Апрув", icon: ClipboardCheck, roles: managerRoles },
+  { href: "/feedback", label: "Обратная связь", icon: MessageSquareText, roles: allRoles },
+  { href: "/approvals", label: "Согласование", icon: ClipboardCheck, roles: managerRoles },
   { href: "/diagnostics", label: "Диагностика", icon: ListChecks, roles: managerRoles }
 ];
 
 const roleNotes: Record<AppRole, string> = {
   ADMIN: "Полный контур продукта: ученики, мероприятия, предложения изменений и контроль рабочих процессов.",
-  CURATOR: "Педагог ведет диагностику, карту мероприятий, фидбэк и подтверждает изменения перед обновлением профиля.",
+  CURATOR: "Педагог ведет диагностику, карту мероприятий, обратную связь и согласует изменения перед обновлением профиля.",
   PARENT: "Родитель видит профиль ребенка, назначенные мероприятия и может оставить обратную связь после участия.",
   STUDENT: "Ученик видит свою карту, ближайшие пробы и может заполнить впечатления после мероприятия."
 };

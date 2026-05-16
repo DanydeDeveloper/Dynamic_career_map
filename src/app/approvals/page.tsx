@@ -18,11 +18,11 @@ export default async function ApprovalsPage() {
     <>
       <header className="page-header">
         <div>
-          <p className="eyebrow">Апрув педагога</p>
+          <p className="eyebrow">Согласование педагога</p>
           <h1 className="page-title">Предложения изменений</h1>
           <p className="page-description">
-            Система может предлагать обновления профиля, насмотренности, стратегии и карты, но финальное решение
-            остается за педагогом.
+            Система может предлагать обновления профиля, насмотренности, стратегии и карты. После согласования
+            изменения применяются к данным ученика.
           </p>
         </div>
       </header>
@@ -31,7 +31,7 @@ export default async function ApprovalsPage() {
         {proposals.length > 0 ? (
           proposals.map((proposal) => <ChangeProposalCard key={proposal.id} proposal={proposal} />)
         ) : (
-          <div className="empty-state">Нет предложений, которые ждут решения.</div>
+          <div className="empty-state">Нет предложений, которые ждут согласования.</div>
         )}
       </div>
     </>

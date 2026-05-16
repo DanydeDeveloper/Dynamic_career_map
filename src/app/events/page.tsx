@@ -21,11 +21,11 @@ export default async function EventsPage() {
             <p className="eyebrow">Карта мероприятий</p>
             <h1 className="page-title">Назначенные профпробы</h1>
             <p className="page-description">
-              Здесь показаны мероприятия, которые педагог уже включил в карту. После участия можно заполнить фидбэк.
+              Здесь показаны мероприятия, которые педагог уже включил в карту. После участия можно заполнить обратную связь.
             </p>
           </div>
           <Link className="button primary" href="/feedback">
-            Оставить фидбэк
+            Оставить обратную связь
           </Link>
         </header>
 

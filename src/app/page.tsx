@@ -21,7 +21,7 @@ const dashboardCopy = {
     eyebrow: "Кабинет педагога",
     title: "Рабочая панель сопровождения",
     description:
-      "Здесь собраны ученики, ближайшие профпробы, фидбэк и предложения изменений, которые педагог подтверждает перед обновлением карты."
+      "Здесь собраны ученики, ближайшие профпробы, обратная связь и предложения изменений, которые педагог согласует перед обновлением карты."
   },
   PARENT: {
     eyebrow: "Кабинет родителя",
@@ -136,7 +136,7 @@ function QuickActions({ role }: { role: string }) {
             </Link>
             <Link className="action-tile" href="/approvals">
               <ClipboardCheck size={18} aria-hidden="true" />
-              <span>Разобрать апрув</span>
+              <span>Разобрать согласование</span>
             </Link>
           </>
         ) : (
@@ -151,7 +151,7 @@ function QuickActions({ role }: { role: string }) {
             </Link>
             <Link className="action-tile" href="/feedback">
               <MessageSquareText size={18} aria-hidden="true" />
-              <span>Оставить фидбэк</span>
+              <span>Оставить обратную связь</span>
             </Link>
           </>
         )}

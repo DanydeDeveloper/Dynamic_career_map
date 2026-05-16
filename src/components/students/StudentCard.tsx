@@ -62,7 +62,7 @@ export function StudentCard({ student }: StudentCardProps) {
 
       <div className="tags">
         <span className={`tag ${student.proposals.length > 0 ? "warning" : ""}`}>
-          {student.proposals.length} предложений на апрув
+          {student.proposals.length} предложений на согласование
         </span>
         <span className="tag accent">Карта активна</span>
       </div>

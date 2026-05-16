@@ -10,7 +10,7 @@ export const managerRoles: AppRole[] = ["ADMIN", "CURATOR"];
 export const allRoles: AppRole[] = ["ADMIN", "CURATOR", "PARENT", "STUDENT"];
 
 export const routeAccessRules: RouteAccessRule[] = [
-  { label: "Апрув", pathPrefix: "/approvals", roles: managerRoles },
+  { label: "Согласование", pathPrefix: "/approvals", roles: managerRoles },
   { label: "Диагностика", pathPrefix: "/diagnostics", roles: managerRoles },
   { label: "Новый ученик", pathPrefix: "/students/new", roles: managerRoles },
   { label: "Диагностика ученика", pathPrefix: "/students/:id/diagnostics", roles: managerRoles },

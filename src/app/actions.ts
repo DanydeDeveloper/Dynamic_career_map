@@ -7,7 +7,7 @@ import { professionalAreas } from "@/lib/constants";
 import { canManageApprovals, canManageEvents, canManageStudents, requireUser } from "@/lib/authz";
 import { generateCareerStrategyDraft, generateFeedbackProposals } from "@/lib/ai";
 import { parseJson } from "@/lib/format";
-import { visibilityLevel } from "@/lib/visibility";
+import { applyApprovedProposal } from "@/lib/proposal-application";
 
 const json = (value: unknown) => JSON.stringify(value);
 
@@ -377,7 +377,7 @@ export async function submitFeedbackAction(formData: FormData) {
     student.userId === user.id;
 
   if (!canSubmit) {
-    throw new Error("Недостаточно прав для отправки фидбэка по этому ученику.");
+    throw new Error("Недостаточно прав для отправки обратной связи по этому ученику.");
   }
 
   const eventAreas = parseJson<string[]>(event.professionalAreasJson, []);
@@ -440,61 +440,34 @@ export async function submitFeedbackAction(formData: FormData) {
 export async function updateProposalStatusAction(formData: FormData) {
   const user = await requireUser();
   if (!canManageApprovals(user.role)) {
-    throw new Error("Недостаточно прав для апрува предложений.");
+    throw new Error("Недостаточно прав для согласования предложений.");
   }
 
   const proposalId = text(formData, "proposalId");
   const status = text(formData, "status");
+  const shouldApplyStatus = status === "approved" || status === "edited";
+  const existingProposal = await prisma.changeProposal.findUnique({
+    where: { id: proposalId }
+  });
+
+  if (!existingProposal) {
+    throw new Error("Предложение не найдено.");
+  }
+
+  const shouldApply = shouldApplyStatus && existingProposal.status !== "approved" && existingProposal.status !== "edited";
+
+  if (shouldApply) {
+    await applyApprovedProposal(proposalId);
+  }
 
   const proposal = await prisma.changeProposal.update({
     where: { id: proposalId },
     data: {
       status,
-      approvedBy: status === "approved" || status === "edited" ? user.id : null,
-      approvedAt: status === "approved" || status === "edited" ? new Date() : null
-    },
-    include: {
-      triggerEvent: true
+      approvedBy: shouldApplyStatus ? user.id : null,
+      approvedAt: shouldApplyStatus ? new Date() : null
     }
   });
-
-  if ((status === "approved" || status === "edited") && proposal.proposalType === "update_visibility" && proposal.triggerEvent) {
-    const eventAreas = parseJson<string[]>(proposal.triggerEvent.professionalAreasJson, []);
-
-    for (const area of eventAreas) {
-      const existing = await prisma.careerVisibility.findUnique({
-        where: {
-          studentId_area: {
-            studentId: proposal.studentId,
-            area
-          }
-        }
-      });
-      const evidence = parseJson<string[]>(existing?.evidenceJson ?? "[]", []);
-      const nextScore = Math.min((existing?.score ?? 0) + 5, 100);
-
-      await prisma.careerVisibility.upsert({
-        where: {
-          studentId_area: {
-            studentId: proposal.studentId,
-            area
-          }
-        },
-        update: {
-          score: nextScore,
-          level: visibilityLevel(nextScore),
-          evidenceJson: json([...new Set([...evidence, proposal.triggerEvent.title])])
-        },
-        create: {
-          studentId: proposal.studentId,
-          area,
-          score: nextScore,
-          level: visibilityLevel(nextScore),
-          evidenceJson: json([proposal.triggerEvent.title])
-        }
-      });
-    }
-  }
 
   revalidatePath("/approvals");
   revalidatePath("/");

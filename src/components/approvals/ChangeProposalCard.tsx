@@ -1,6 +1,6 @@
 import { ClipboardCheck } from "lucide-react";
 import { updateProposalStatusAction } from "@/app/actions";
-import { proposalStatusLabels } from "@/lib/constants";
+import { proposalStatusLabels, proposalTypeLabels } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 
 type ChangeProposalCardProps = {
@@ -20,11 +20,14 @@ type ChangeProposalCardProps = {
 };
 
 export function ChangeProposalCard({ proposal, showActions = true }: ChangeProposalCardProps) {
+  const canAct = showActions && (proposal.status === "pending" || proposal.status === "postponed");
+
   return (
     <article className="proposal-card">
       <div className="student-card-top">
         <div>
           <span className="tag primary">{proposalStatusLabels[proposal.status] ?? proposal.status}</span>
+          <span className="tag accent">{proposalTypeLabels[proposal.proposalType] ?? "Применение к стратегии"}</span>
           <h2 className="student-name">{proposal.description}</h2>
         </div>
         <ClipboardCheck size={22} aria-hidden="true" />
@@ -51,20 +54,20 @@ export function ChangeProposalCard({ proposal, showActions = true }: ChangePropo
         </div>
       )}
 
-      {showActions ? (
+      {canAct ? (
         <div className="proposal-actions">
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="approved" />
             <button className="button primary" type="submit">
-              Одобрить
+              Согласовать
             </button>
           </form>
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="edited" />
             <button className="button" type="submit">
-              Редактировать и одобрить
+              Редактировать и согласовать
             </button>
           </form>
           <form action={updateProposalStatusAction}>

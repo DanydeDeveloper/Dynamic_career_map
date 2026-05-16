@@ -34,17 +34,30 @@ export const eventStatusLabels: Record<string, string> = {
   approved: "Одобрено",
   planned: "Запланировано",
   visited: "Посещено",
-  feedback_completed: "Фидбэк заполнен",
+  feedback_completed: "Обратная связь заполнена",
   change_suggested: "Есть предложение",
   completed: "Завершено"
 };
 
 export const proposalStatusLabels: Record<string, string> = {
   pending: "Ждет решения",
-  approved: "Одобрено",
+  approved: "Согласовано",
   rejected: "Отклонено",
-  edited: "Изменено",
+  edited: "Изменено и согласовано",
   postponed: "Отложено"
+};
+
+export const proposalTypeLabels: Record<string, string> = {
+  update_profile: "Применится к профилю",
+  update_interest: "Применится к интересам",
+  update_visibility: "Применится к насмотренности",
+  adjust_formats: "Применится к форматам активности",
+  update_activity_format: "Применится к форматам активности",
+  update_strategy: "Применится к стратегии",
+  add_event: "Применится к карте или стратегии",
+  remove_event: "Удалит мероприятие из карты",
+  change_priority: "Изменит приоритет мероприятия",
+  change_event_priority: "Изменит приоритет мероприятия"
 };
 
 export const formatLabels: Record<string, string> = {

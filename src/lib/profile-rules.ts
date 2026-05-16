@@ -1,7 +1,12 @@
 import type { FeedbackSignal } from "@/types/domain";
 
 export type RuleProposal = {
-  proposalType: "update_profile" | "update_visibility" | "add_event" | "change_priority" | "update_strategy";
+  proposalType:
+    | "update_profile"
+    | "update_visibility"
+    | "add_event"
+    | "change_event_priority"
+    | "update_strategy";
   description: string;
   oldValue?: string;
   newValue?: string;
@@ -26,7 +31,7 @@ export function buildRuleBasedProposals(signal: FeedbackSignal): RuleProposal[] 
       proposalType: "update_visibility",
       description: `Зафиксировать рост насмотренности в области ${mainArea}`,
       oldValue: "Насмотренность до посещения мероприятия",
-      newValue: "Добавить баллы насмотренности после подтвержденного фидбэка",
+      newValue: "Добавить баллы насмотренности после подтвержденной обратной связи",
       reason:
         "Мероприятие стало новой подтвержденной пробой. Насмотренность растет отдельно от интереса и должна отражать накопленный опыт."
     });
@@ -40,7 +45,7 @@ export function buildRuleBasedProposals(signal: FeedbackSignal): RuleProposal[] 
 
   if (signal.interestScore <= 4 && signal.wantContinue === "no") {
     proposals.push({
-      proposalType: "change_priority",
+      proposalType: "change_event_priority",
       description: `Снизить приоритет текущего формата в области ${mainArea}`,
       oldValue: signal.eventFormats.join(", "),
       newValue: "Предложить альтернативный формат в той же области",

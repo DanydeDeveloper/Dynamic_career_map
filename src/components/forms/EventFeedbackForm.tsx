@@ -20,7 +20,7 @@ export function EventFeedbackForm({ students, events }: EventFeedbackFormProps) 
   return (
     <section className="panel">
       <div className="panel-header">
-        <h2 className="panel-title">Фидбэк после мероприятия</h2>
+        <h2 className="panel-title">Обратная связь после мероприятия</h2>
       </div>
       <form action={submitFeedbackAction} className="panel-body form-grid">
         <div className="field">

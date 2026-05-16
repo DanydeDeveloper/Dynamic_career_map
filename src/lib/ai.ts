@@ -40,7 +40,7 @@ function buildFallbackStrategy(input: GeneratedStrategyInput) {
     areasToCheck: lowVisibility,
     recommendedFormats: ["workshop", "project_school", "excursion"],
     risks: ["Преждевременное сужение траектории", "Переоценка одного успешного или неудачного события"],
-    next3MonthsFocus: "Провести 2-3 разные профпробы и собрать фидбэк по интересу, вовлеченности и усталости.",
+    next3MonthsFocus: "Провести 2-3 разные профпробы и собрать обратную связь по интересу, вовлеченности и усталости.",
     next12MonthsFocus: "Собрать сбалансированную карту из технических, научных, творческих и социальных проб."
   };
 }
