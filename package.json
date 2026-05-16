@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",
-    "vercel-build": "prisma generate && npm run db:init && npm run db:seed && next build",
+    "vercel-build": "node scripts/vercel-build.cjs",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
