@@ -1,8 +1,9 @@
 import { buildRuleBasedProposals, type RuleProposal } from "@/lib/profile-rules";
 import type { FeedbackSignal } from "@/types/domain";
 
-const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
-const DEFAULT_MODEL = "gpt-5.4-mini";
+const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_VERSION = "2023-06-01";
+const DEFAULT_MODEL = "claude-sonnet-4-6";
 
 export type GeneratedStrategyInput = {
   studentName: string;
@@ -38,15 +39,19 @@ export type GeneratedDiagnosticInsights = {
   source: "ai" | "fallback";
 };
 
-type OpenAIResponse = {
-  output_text?: string;
-  output?: Array<{
-    type?: string;
-    content?: Array<{
-      type?: string;
-      text?: string;
-    }>;
-  }>;
+type AnthropicMessageResponse = {
+  content?: Array<
+    | {
+        type: "text";
+        text: string;
+      }
+    | {
+        type: "tool_use";
+        id: string;
+        name: string;
+        input: unknown;
+      }
+  >;
 };
 
 const strategySchema = {
@@ -115,81 +120,89 @@ const proposalsSchema = {
   }
 };
 
-function openAiModel() {
-  return process.env.OPENAI_MODEL || DEFAULT_MODEL;
+function anthropicModel() {
+  return process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
 }
 
-function hasOpenAiKey() {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
+function anthropicApiKey() {
+  return process.env.ANTHROPIC_API_KEY?.trim() || process.env.CLAUDE_API_KEY?.trim() || "";
 }
 
-function buildJsonRequest(name: string, schema: object, instructions: string, input: unknown) {
+function hasAnthropicKey() {
+  return Boolean(anthropicApiKey());
+}
+
+function buildStructuredToolRequest(name: string, schema: object, instructions: string, input: unknown) {
   return {
-    model: openAiModel(),
-    instructions,
-    input: [
+    model: anthropicModel(),
+    max_tokens: 1800,
+    system: instructions,
+    messages: [
       {
         role: "user",
         content: [
           {
-            type: "input_text",
-            text: JSON.stringify(input)
+            type: "text",
+            text: [
+              "Верни результат только через вызов инструмента emit_structured_result.",
+              "Входные данные:",
+              JSON.stringify(input)
+            ].join("\n")
           }
         ]
       }
     ],
-    max_output_tokens: 1800,
-    text: {
-      format: {
-        type: "json_schema",
-        name,
-        strict: true,
-        schema
-      },
-      verbosity: "medium"
+    tools: [
+      {
+        name: "emit_structured_result",
+        description: `Return the validated ${name} JSON payload for the application.`,
+        input_schema: schema,
+        strict: true
+      }
+    ],
+    tool_choice: {
+      type: "tool",
+      name: "emit_structured_result"
     }
   };
 }
 
-function extractOutputText(response: OpenAIResponse) {
-  if (response.output_text) {
-    return response.output_text;
-  }
-
-  return (
-    response.output
-      ?.flatMap((item) => item.content ?? [])
-      .find((content) => content.type === "output_text" && content.text)
-      ?.text ?? ""
+function extractToolInput(response: AnthropicMessageResponse) {
+  const toolUse = response.content?.find(
+    (content): content is Extract<NonNullable<AnthropicMessageResponse["content"]>[number], { type: "tool_use" }> =>
+      content.type === "tool_use" && content.name === "emit_structured_result"
   );
+
+  return toolUse?.input;
 }
 
-async function callOpenAiJson<T>(name: string, schema: object, instructions: string, input: unknown): Promise<T | null> {
-  if (!hasOpenAiKey()) {
+async function callClaudeStructured<T>(name: string, schema: object, instructions: string, input: unknown): Promise<T | null> {
+  if (!hasAnthropicKey()) {
     return null;
   }
 
   try {
-    const response = await fetch(OPENAI_RESPONSES_URL, {
+    const response = await fetch(ANTHROPIC_MESSAGES_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        "anthropic-version": ANTHROPIC_VERSION,
+        "x-api-key": anthropicApiKey()
       },
-      body: JSON.stringify(buildJsonRequest(name, schema, instructions, input)),
+      body: JSON.stringify(buildStructuredToolRequest(name, schema, instructions, input)),
       cache: "no-store"
     });
 
     if (!response.ok) {
-      console.warn(`OpenAI draft generation failed: ${response.status} ${await response.text()}`);
+      console.warn(`Claude draft generation failed: ${response.status} ${await response.text()}`);
       return null;
     }
 
-    const data = (await response.json()) as OpenAIResponse;
-    const outputText = extractOutputText(data);
-    return outputText ? (JSON.parse(outputText) as T) : null;
+    const data = (await response.json()) as AnthropicMessageResponse;
+    const toolInput = extractToolInput(data);
+    return toolInput ? (toolInput as T) : null;
   } catch (error) {
-    console.warn("OpenAI draft generation failed:", error);
+    console.warn("Claude draft generation failed:", error);
     return null;
   }
 }
@@ -285,7 +298,7 @@ function fallbackInsights(input: GeneratedStrategyInput): GeneratedDiagnosticIns
 
 export async function generateDiagnosticInsightsDraft(input: GeneratedStrategyInput): Promise<GeneratedDiagnosticInsights> {
   const fallback = fallbackInsights(input);
-  const aiDraft = await callOpenAiJson<Record<string, unknown>>(
+  const aiDraft = await callClaudeStructured<Record<string, unknown>>(
     "career_diagnostic_insights",
     strategySchema,
     [
@@ -355,7 +368,7 @@ function normalizeProposals(value: unknown) {
 
 export async function generateFeedbackProposals(signal: FeedbackSignal) {
   const fallback = buildRuleBasedProposals(signal);
-  const aiDraft = await callOpenAiJson<{ proposals: unknown[] }>(
+  const aiDraft = await callClaudeStructured<{ proposals: unknown[] }>(
     "career_feedback_proposals",
     proposalsSchema,
     [
