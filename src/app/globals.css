@@ -1,21 +1,21 @@
 :root {
-  --bg: #fcfdff;
-  --surface: #ffffff;
-  --surface-soft: #f6f2e4;
-  --line: #e4dfca;
-  --line-strong: #c5b675;
-  --text: #1a1f25;
-  --muted: #626872;
-  --primary: #8a0f2c;
-  --primary-strong: #5f0a1e;
-  --primary-soft: #f5e6eb;
-  --accent: #c5b675;
-  --accent-strong: #7f7139;
-  --accent-soft: #f4efd9;
+  --bg: #f1f0ef;
+  --surface: #fbf8f6;
+  --surface-soft: #f4efe6;
+  --line: #e3d6b5;
+  --line-strong: #c8a33a;
+  --text: #05061b;
+  --muted: #5f626b;
+  --primary: #2f5363;
+  --primary-strong: #244553;
+  --primary-soft: #e3edf1;
+  --accent: #c8a33a;
+  --accent-strong: #9a7a24;
+  --accent-soft: #f3ead2;
   --danger: #9f2f2f;
-  --warning: #7f7139;
+  --warning: #9a7a24;
   --radius: 8px;
-  --shadow: 0 14px 40px rgba(26, 31, 37, 0.08);
+  --shadow: 0 14px 40px rgba(5, 6, 27, 0.08);
 }
 
 * {
@@ -54,8 +54,8 @@ textarea {
 }
 
 .sidebar {
-  background: #1a1f25;
-  color: #fcfdff;
+  background: #05061b;
+  color: #fbf8f6;
   padding: 24px 18px;
   position: sticky;
   top: 0;
@@ -75,8 +75,8 @@ textarea {
   width: 42px;
   height: 42px;
   border-radius: 8px;
-  background: #c5b675;
-  color: #1a1f25;
+  background: #c8a33a;
+  color: #05061b;
   font-weight: 800;
 }
 
@@ -88,7 +88,7 @@ textarea {
 
 .brand-subtitle {
   margin: 4px 0 0;
-  color: #c5b675;
+  color: #c8a33a;
   font-size: 13px;
 }
 
@@ -101,7 +101,7 @@ textarea {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.07);
-  color: #f6f2e4;
+  color: #fbf8f6;
   font-size: 12px;
   font-weight: 700;
 }
@@ -310,7 +310,7 @@ textarea {
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .compact-item span:first-child {
@@ -337,8 +337,8 @@ textarea {
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
-  color: #272c33;
+  background: var(--surface);
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -419,7 +419,7 @@ textarea {
   padding: 0 9px;
   border-radius: 999px;
   background: var(--surface-soft);
-  color: #272c33;
+  color: var(--text);
   font-size: 12px;
   font-weight: 650;
 }
@@ -430,7 +430,7 @@ textarea {
 }
 
 .tag.warning {
-  background: #f8edc6;
+  background: var(--accent-soft);
   color: var(--warning);
 }
 
@@ -460,13 +460,13 @@ textarea {
   height: 10px;
   overflow: hidden;
   border-radius: 999px;
-  background: #f1ead2;
+  background: var(--surface-soft);
 }
 
 .progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #8a0f2c, #c5b675);
+  background: linear-gradient(90deg, #2f5363, #c8a33a);
 }
 
 .table-wrap {
@@ -492,8 +492,8 @@ textarea {
 }
 
 .data-table th {
-  background: #f6f2e4;
-  color: #41464c;
+  background: var(--surface-soft);
+  color: var(--text);
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -518,7 +518,7 @@ textarea {
 }
 
 .field label {
-  color: #272c33;
+  color: var(--text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -529,7 +529,7 @@ textarea {
   width: 100%;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 11px 12px;
   color: var(--text);
 }
@@ -583,7 +583,7 @@ textarea {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .diagnostic-notes {
@@ -610,8 +610,8 @@ textarea {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
-  color: #272c33;
+  background: var(--surface);
+  color: var(--text);
   font-size: 13px;
   font-weight: 600;
 }
@@ -637,12 +637,12 @@ textarea {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .score-field span {
   min-height: 34px;
-  color: #272c33;
+  color: var(--text);
   font-size: 12px;
   font-weight: 700;
 }
