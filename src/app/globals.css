@@ -293,6 +293,13 @@ textarea {
   font-size: 17px;
 }
 
+.panel-subtitle {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .panel-body {
   padding: 18px;
 }
@@ -687,8 +694,217 @@ textarea {
   text-align: center;
 }
 
+.empty-state.compact {
+  padding: 14px;
+  text-align: left;
+}
+
 .profile-summary {
   line-height: 1.6;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+  gap: 16px;
+}
+
+.history-note {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(251, 248, 246, 0.68);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.history-note svg {
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.change-timeline {
+  display: grid;
+  gap: 0;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.timeline-item + .timeline-item {
+  margin-top: 14px;
+}
+
+.timeline-marker {
+  position: relative;
+  width: 11px;
+  height: 11px;
+  margin-top: 8px;
+  border: 2px solid var(--primary);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.timeline-marker::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 3px;
+  width: 1px;
+  height: calc(100% + 92px);
+  background: var(--line);
+}
+
+.timeline-item:last-child .timeline-marker::after {
+  display: none;
+}
+
+.timeline-marker.accent {
+  border-color: var(--accent);
+}
+
+.timeline-marker.warning {
+  border-color: var(--warning);
+}
+
+.timeline-content {
+  display: grid;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.timeline-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.timeline-top h3 {
+  margin: 3px 0 0;
+  font-size: 15px;
+}
+
+.timeline-content p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.timeline-date {
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.timeline-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.timeline-details span {
+  min-height: 24px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.interest-dynamics {
+  display: grid;
+  gap: 13px;
+}
+
+.interest-dynamics-list {
+  display: grid;
+  gap: 10px;
+}
+
+.interest-dynamics-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px 112px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.interest-dynamics-row h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.interest-dynamics-row p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.interest-sparkline {
+  display: flex;
+  gap: 5px;
+  align-items: flex-end;
+  justify-content: flex-end;
+  height: 42px;
+}
+
+.interest-sparkline span {
+  width: 10px;
+  min-height: 8px;
+  border-radius: 999px 999px 3px 3px;
+  background: linear-gradient(180deg, var(--accent), var(--primary));
+}
+
+.delta-stack {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  text-align: right;
+}
+
+.delta-stack .muted {
+  font-size: 11px;
+}
+
+.delta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.delta-pill.positive {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.delta-pill.negative {
+  background: #fde2e2;
+  color: var(--danger);
+}
+
+.delta-pill.neutral {
+  background: var(--surface-soft);
+  color: var(--muted);
 }
 
 .proposal-card {
@@ -808,7 +1024,8 @@ textarea {
 
   .metric-row,
   .grid.three,
-  .grid.two {
+  .grid.two,
+  .history-grid {
     grid-template-columns: 1fr;
   }
 
@@ -821,7 +1038,9 @@ textarea {
   .page-header,
   .student-card-top,
   .panel-header,
-  .event-horizon-header {
+  .event-horizon-header,
+  .timeline-top,
+  .interest-dynamics-row {
     display: grid;
   }
 
@@ -848,6 +1067,19 @@ textarea {
   .month-group,
   .event-map-card {
     grid-template-columns: 1fr;
+  }
+
+  .interest-dynamics-row {
+    grid-template-columns: 1fr;
+  }
+
+  .interest-sparkline {
+    justify-content: flex-start;
+  }
+
+  .delta-stack {
+    justify-items: start;
+    text-align: left;
   }
 
   .month-label {

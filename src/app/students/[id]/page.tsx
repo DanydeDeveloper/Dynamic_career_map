@@ -5,6 +5,7 @@ import { ChangeProposalCard } from "@/components/approvals/ChangeProposalCard";
 import { EventRecommendations } from "@/components/events/EventRecommendations";
 import { EventMapTimeline } from "@/components/events/EventMapTimeline";
 import { ProfileSummary } from "@/components/students/ProfileSummary";
+import { StudentChangeHistory } from "@/components/students/StudentChangeHistory";
 import { VisibilityBars } from "@/components/students/VisibilityBars";
 import { getApprovedEvents, getStudentProfile } from "@/lib/data";
 import { canManageApprovals, canManageStudents, requireUser } from "@/lib/authz";
@@ -65,6 +66,10 @@ export default async function StudentPage({ params }: StudentPageProps) {
             <ProfileSummary profile={student.profile} />
           </div>
         </div>
+      </section>
+
+      <section className="section">
+        <StudentChangeHistory student={student} />
       </section>
 
       <section className="section">
