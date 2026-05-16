@@ -3,6 +3,13 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 const json = (value: unknown) => JSON.stringify(value);
 
+function eventDate(daysFromToday: number) {
+  const date = new Date();
+  date.setUTCHours(10, 0, 0, 0);
+  date.setUTCDate(date.getUTCDate() + daysFromToday);
+  return date.toISOString();
+}
+
 type DemoSource = {
   title: string;
   url: string;
@@ -81,7 +88,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Детский технопарк",
     title: "Робототехника: собрать и запрограммировать манипулятор",
-    date: "2026-06-06T10:00:00.000Z",
+    date: eventDate(7),
     time: "11:00",
     format: "offline",
     participationFormat: "team",
@@ -101,7 +108,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Детский технопарк",
     title: "3D-моделирование для инженерных задач",
-    date: "2026-06-13T10:00:00.000Z",
+    date: eventDate(12),
     time: "14:00",
     format: "offline",
     participationFormat: "individual",
@@ -121,7 +128,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Музей науки и технологий",
     title: "Фестиваль экспериментов: химия, физика, биология",
-    date: "2026-06-20T10:00:00.000Z",
+    date: eventDate(18),
     time: "12:00",
     format: "offline",
     participationFormat: "family",
@@ -141,7 +148,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Онлайн-платформа школьных хакатонов",
     title: "Мини-хакатон: приложение для школьной жизни",
-    date: "2026-06-27T10:00:00.000Z",
+    date: eventDate(24),
     time: "10:00",
     format: "online",
     participationFormat: "team",
@@ -160,7 +167,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Университетские лаборатории",
     title: "Экскурсия в биолабораторию: как работают исследователи",
-    date: "2026-07-04T10:00:00.000Z",
+    date: eventDate(32),
     time: "13:30",
     format: "offline",
     participationFormat: "with_curator",
@@ -180,7 +187,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Школа медиа и дизайна",
     title: "Практикум: сделать афишу мероприятия в Figma",
-    date: "2026-07-09T10:00:00.000Z",
+    date: eventDate(38),
     time: "17:00",
     format: "online",
     participationFormat: "individual",
@@ -199,7 +206,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Центр социальных проектов",
     title: "Городской проект: как придумать полезную инициативу",
-    date: "2026-07-16T10:00:00.000Z",
+    date: eventDate(45),
     time: "16:00",
     format: "hybrid",
     participationFormat: "team",
@@ -219,7 +226,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Музей науки и технологий",
     title: "Лекция-практикум: космос, спутники и связь",
-    date: "2026-07-22T10:00:00.000Z",
+    date: eventDate(53),
     time: "15:00",
     format: "offline",
     participationFormat: "individual",
@@ -239,7 +246,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Онлайн-платформа школьных хакатонов",
     title: "Олимпиада по логике и алгоритмам для 5-7 классов",
-    date: "2026-07-30T10:00:00.000Z",
+    date: eventDate(61),
     time: "11:00",
     format: "online",
     participationFormat: "individual",
@@ -258,7 +265,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Детский технопарк",
     title: "Каникулярная смена: инженерный стартап",
-    date: "2026-08-03T10:00:00.000Z",
+    date: eventDate(70),
     time: "10:00",
     format: "offline",
     participationFormat: "team",
@@ -278,7 +285,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Школа медиа и дизайна",
     title: "Подкаст за два часа: интервью и монтаж",
-    date: "2026-08-11T10:00:00.000Z",
+    date: eventDate(82),
     time: "18:00",
     format: "online",
     participationFormat: "team",
@@ -297,7 +304,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Университетские лаборатории",
     title: "Медицинский симулятор: первая помощь и диагностика",
-    date: "2026-08-19T10:00:00.000Z",
+    date: eventDate(96),
     time: "13:00",
     format: "offline",
     participationFormat: "team",
@@ -317,7 +324,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Центр социальных проектов",
     title: "Правовой квест: как устроены правила города",
-    date: "2026-08-25T10:00:00.000Z",
+    date: eventDate(112),
     time: "15:30",
     format: "offline",
     participationFormat: "team",
@@ -337,7 +344,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Музей науки и технологий",
     title: "Экскурсия: профессии будущего в энергетике",
-    date: "2026-09-05T10:00:00.000Z",
+    date: eventDate(128),
     time: "12:30",
     format: "offline",
     participationFormat: "family",
@@ -357,7 +364,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Школа медиа и дизайна",
     title: "Комикс как проект: сценарий, персонаж, раскадровка",
-    date: "2026-09-12T10:00:00.000Z",
+    date: eventDate(145),
     time: "12:00",
     format: "online",
     participationFormat: "individual",
@@ -376,7 +383,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Онлайн-платформа школьных хакатонов",
     title: "No-code проект: собрать прототип полезного сервиса",
-    date: "2026-09-20T10:00:00.000Z",
+    date: eventDate(163),
     time: "11:00",
     format: "online",
     participationFormat: "team",
@@ -395,7 +402,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Университетские лаборатории",
     title: "Микромир под микроскопом: клетки и материалы",
-    date: "2026-09-27T10:00:00.000Z",
+    date: eventDate(181),
     time: "14:00",
     format: "offline",
     participationFormat: "individual",
@@ -415,7 +422,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Центр социальных проектов",
     title: "Наставник на час: придумать занятие для младших",
-    date: "2026-10-04T10:00:00.000Z",
+    date: eventDate(198),
     time: "16:00",
     format: "offline",
     participationFormat: "team",
@@ -435,7 +442,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Детский технопарк",
     title: "Arduino: датчики, свет и простая автоматизация",
-    date: "2026-10-11T10:00:00.000Z",
+    date: eventDate(215),
     time: "13:00",
     format: "offline",
     participationFormat: "individual",
@@ -455,7 +462,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Школа медиа и дизайна",
     title: "Видеоистория: снять и смонтировать короткий ролик",
-    date: "2026-10-18T10:00:00.000Z",
+    date: eventDate(232),
     time: "17:30",
     format: "online",
     participationFormat: "individual",
@@ -474,7 +481,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Музей науки и технологий",
     title: "Научный стендап для школьников: объяснить сложное просто",
-    date: "2026-10-25T10:00:00.000Z",
+    date: eventDate(249),
     time: "15:00",
     format: "offline",
     participationFormat: "individual",
@@ -494,7 +501,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Университетские лаборатории",
     title: "Интенсив: генетика вокруг нас",
-    date: "2026-11-01T10:00:00.000Z",
+    date: eventDate(266),
     time: "12:00",
     format: "offline",
     participationFormat: "with_curator",
@@ -514,7 +521,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Онлайн-платформа школьных хакатонов",
     title: "Data-квест: найти закономерности в данных",
-    date: "2026-11-08T10:00:00.000Z",
+    date: eventDate(284),
     time: "11:30",
     format: "online",
     participationFormat: "individual",
@@ -533,7 +540,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Центр социальных проектов",
     title: "Медиа для добрых дел: кампания социального проекта",
-    date: "2026-11-15T10:00:00.000Z",
+    date: eventDate(302),
     time: "16:30",
     format: "hybrid",
     participationFormat: "team",
@@ -553,7 +560,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Детский технопарк",
     title: "Проект: умная теплица на датчиках",
-    date: "2026-11-22T10:00:00.000Z",
+    date: eventDate(320),
     time: "13:00",
     format: "offline",
     participationFormat: "team",
@@ -573,7 +580,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Школа медиа и дизайна",
     title: "UX-разбор: почему приложением удобно пользоваться",
-    date: "2026-12-01T10:00:00.000Z",
+    date: eventDate(338),
     time: "18:00",
     format: "online",
     participationFormat: "team",
@@ -592,7 +599,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Центр социальных проектов",
     title: "Дебаты: город, школа и правила",
-    date: "2026-12-08T10:00:00.000Z",
+    date: eventDate(356),
     time: "17:00",
     format: "offline",
     participationFormat: "team",
@@ -612,7 +619,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Музей науки и технологий",
     title: "Экодизайн: придумать предмет из вторичных материалов",
-    date: "2026-12-15T10:00:00.000Z",
+    date: eventDate(378),
     time: "14:00",
     format: "offline",
     participationFormat: "individual",
@@ -632,7 +639,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Онлайн-платформа школьных хакатонов",
     title: "Финальный проект: цифровой помощник для семьи",
-    date: "2027-01-18T10:00:00.000Z",
+    date: eventDate(420),
     time: "11:00",
     format: "online",
     participationFormat: "team",
@@ -651,7 +658,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Университетские лаборатории",
     title: "Наука о спорте: движение, пульс и восстановление",
-    date: "2027-02-07T10:00:00.000Z",
+    date: eventDate(470),
     time: "12:30",
     format: "offline",
     participationFormat: "team",
@@ -671,7 +678,7 @@ const events: DemoEvent[] = [
   {
     sourceTitle: "Школа медиа и дизайна",
     title: "Курс выходного дня: бренд школьного проекта",
-    date: "2027-03-14T10:00:00.000Z",
+    date: eventDate(525),
     time: "13:00",
     format: "online",
     participationFormat: "team",
