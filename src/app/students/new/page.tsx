@@ -1,6 +1,16 @@
 import { NewStudentForm } from "@/components/forms/NewStudentForm";
+import { canManageStudents, requireUser } from "@/lib/authz";
+import { notFound } from "next/navigation";
 
-export default function NewStudentPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewStudentPage() {
+  const user = await requireUser();
+
+  if (!canManageStudents(user.role)) {
+    notFound();
+  }
+
   return (
     <>
       <header className="page-header">

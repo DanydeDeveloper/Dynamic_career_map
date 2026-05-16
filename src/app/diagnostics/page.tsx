@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { NewStudentForm } from "@/components/forms/NewStudentForm";
 import { getStudentsForForms } from "@/lib/data";
+import { canManageStudents, requireUser } from "@/lib/authz";
+
+export const dynamic = "force-dynamic";
 
 export default async function DiagnosticsPage() {
-  const students = await getStudentsForForms();
+  const user = await requireUser();
+  const students = await getStudentsForForms(user);
 
   return (
     <>
@@ -17,7 +21,7 @@ export default async function DiagnosticsPage() {
         </div>
       </header>
 
-      <NewStudentForm />
+      {canManageStudents(user.role) ? <NewStudentForm /> : null}
 
       <section className="section">
         <h2 className="section-title">Продолжить диагностику существующего ученика</h2>

@@ -1,7 +1,17 @@
 import { createEventAction } from "@/app/actions";
 import { eventTypeLabels, professionalAreas, russianCities } from "@/lib/constants";
+import { canManageEvents, requireUser } from "@/lib/authz";
+import { notFound } from "next/navigation";
 
-export default function NewEventPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewEventPage() {
+  const user = await requireUser();
+
+  if (!canManageEvents(user.role)) {
+    notFound();
+  }
+
   return (
     <>
       <header className="page-header">

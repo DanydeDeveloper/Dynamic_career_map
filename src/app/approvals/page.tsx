@@ -1,8 +1,18 @@
 import { ChangeProposalCard } from "@/components/approvals/ChangeProposalCard";
 import { getPendingProposals } from "@/lib/data";
+import { canManageApprovals, requireUser } from "@/lib/authz";
+import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 export default async function ApprovalsPage() {
-  const proposals = await getPendingProposals();
+  const user = await requireUser();
+
+  if (!canManageApprovals(user.role)) {
+    notFound();
+  }
+
+  const proposals = await getPendingProposals(user);
 
   return (
     <>

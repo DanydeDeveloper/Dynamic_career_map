@@ -1,9 +1,9 @@
-process.env.DATABASE_URL ||= "file:./dev.db";
+process.env.DATABASE_URL ||= "postgresql://postgres:postgres@localhost:5432/dynamic_career_map";
 
+import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-
 const json = (value: unknown) => JSON.stringify(value);
 
 async function main() {
@@ -17,6 +17,47 @@ async function main() {
   await prisma.studentProfile.deleteMany();
   await prisma.event.deleteMany();
   await prisma.student.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.account.deleteMany();
+  await prisma.verificationToken.deleteMany();
+  await prisma.user.deleteMany();
+
+  const passwordHash = await bcrypt.hash("password123", 10);
+
+  const [admin, curator, parent, studentUser] = await Promise.all([
+    prisma.user.create({
+      data: {
+        email: "admin@private.education",
+        name: "Администратор",
+        role: "ADMIN",
+        passwordHash
+      }
+    }),
+    prisma.user.create({
+      data: {
+        email: "curator@private.education",
+        name: "Мария Сергеева",
+        role: "CURATOR",
+        passwordHash
+      }
+    }),
+    prisma.user.create({
+      data: {
+        email: "parent@example.com",
+        name: "Елена Морозова",
+        role: "PARENT",
+        passwordHash
+      }
+    }),
+    prisma.user.create({
+      data: {
+        email: "student@example.com",
+        name: "Алиса Морозова",
+        role: "STUDENT",
+        passwordHash
+      }
+    })
+  ]);
 
   const student = await prisma.student.create({
     data: {
@@ -25,8 +66,11 @@ async function main() {
       grade: "6 класс",
       city: "Москва",
       school: "Private.Education",
-      parentName: "Елена Морозова",
-      curatorName: "Мария Сергеева",
+      parentName: parent.name,
+      curatorName: curator.name,
+      parentId: parent.id,
+      curatorId: curator.id,
+      userId: studentUser.id,
       profile: {
         create: {
           interestsJson: json({ IT: 7, engineering: 6, science: 5, design: 4, medicine: 2 }),
@@ -201,6 +245,12 @@ async function main() {
       status: "pending"
     }
   });
+
+  console.log("Seed users:");
+  console.log(`- ${admin.email} / password123`);
+  console.log(`- ${curator.email} / password123`);
+  console.log(`- ${parent.email} / password123`);
+  console.log(`- ${studentUser.email} / password123`);
 }
 
 main()

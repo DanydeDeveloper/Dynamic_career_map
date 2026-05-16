@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { professionalAreas } from "@/lib/constants";
+import { canManageApprovals, canManageEvents, canManageStudents, requireUser } from "@/lib/authz";
 import { generateCareerStrategyDraft, generateFeedbackProposals } from "@/lib/ai";
 import { parseJson } from "@/lib/format";
 import { visibilityLevel } from "@/lib/visibility";
@@ -74,6 +75,11 @@ function firstDateTime(date: string) {
 }
 
 export async function createStudentAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageStudents(user.role)) {
+    throw new Error("Недостаточно прав для создания ученика.");
+  }
+
   const name = text(formData, "name");
   if (!name) {
     throw new Error("Нужно указать имя ученика.");
@@ -87,7 +93,8 @@ export async function createStudentAction(formData: FormData) {
       city: text(formData, "city") || "Москва",
       school: optionalText(formData, "school"),
       parentName: optionalText(formData, "parentName"),
-      curatorName: optionalText(formData, "curatorName") || "Педагог"
+      curatorName: optionalText(formData, "curatorName") || user.name || "Педагог",
+      curatorId: user.id
     }
   });
 
@@ -97,9 +104,14 @@ export async function createStudentAction(formData: FormData) {
 }
 
 export async function saveStudentDiagnosticAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageStudents(user.role)) {
+    throw new Error("Недостаточно прав для редактирования диагностики.");
+  }
+
   const studentId = text(formData, "studentId");
   const student = await prisma.student.findUnique({
-    where: { id: studentId },
+    where: { id: studentId, ...(user.role === "ADMIN" ? {} : { curatorId: user.id }) },
     include: {
       parentRequest: true,
       visibility: true
@@ -210,6 +222,11 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
 }
 
 export async function saveParentRequestAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageStudents(user.role)) {
+    throw new Error("Недостаточно прав для редактирования родительского запроса.");
+  }
+
   const studentId = text(formData, "studentId");
   const expectations = text(formData, "expectations");
 
@@ -243,6 +260,11 @@ export async function saveParentRequestAction(formData: FormData) {
 }
 
 export async function createEventAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user.role)) {
+    throw new Error("Недостаточно прав для создания мероприятия.");
+  }
+
   await prisma.event.create({
     data: {
       title: text(formData, "title"),
@@ -269,6 +291,11 @@ export async function createEventAction(formData: FormData) {
 }
 
 export async function assignEventToStudentAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user.role)) {
+    throw new Error("Недостаточно прав для назначения мероприятия.");
+  }
+
   const studentId = text(formData, "studentId");
   const eventId = text(formData, "eventId");
 
@@ -305,12 +332,28 @@ export async function assignEventToStudentAction(formData: FormData) {
 }
 
 export async function submitFeedbackAction(formData: FormData) {
+  const user = await requireUser();
   const studentId = text(formData, "studentId");
   const eventId = text(formData, "eventId");
+  const student = await prisma.student.findUnique({
+    where: {
+      id: studentId
+    }
+  });
   const event = await prisma.event.findUnique({ where: { id: eventId } });
 
-  if (!studentId || !event) {
+  if (!studentId || !student || !event) {
     throw new Error("Нужно выбрать ученика и мероприятие.");
+  }
+
+  const canSubmit =
+    user.role === "ADMIN" ||
+    student.curatorId === user.id ||
+    student.parentId === user.id ||
+    student.userId === user.id;
+
+  if (!canSubmit) {
+    throw new Error("Недостаточно прав для отправки фидбэка по этому ученику.");
   }
 
   const eventAreas = parseJson<string[]>(event.professionalAreasJson, []);
@@ -371,6 +414,11 @@ export async function submitFeedbackAction(formData: FormData) {
 }
 
 export async function updateProposalStatusAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageApprovals(user.role)) {
+    throw new Error("Недостаточно прав для апрува предложений.");
+  }
+
   const proposalId = text(formData, "proposalId");
   const status = text(formData, "status");
 
@@ -378,7 +426,7 @@ export async function updateProposalStatusAction(formData: FormData) {
     where: { id: proposalId },
     data: {
       status,
-      approvedBy: status === "approved" || status === "edited" ? "Педагог" : null,
+      approvedBy: status === "approved" || status === "edited" ? user.id : null,
       approvedAt: status === "approved" || status === "edited" ? new Date() : null
     },
     include: {

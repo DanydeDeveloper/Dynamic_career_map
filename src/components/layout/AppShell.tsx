@@ -1,10 +1,21 @@
 import { Sidebar } from "@/components/layout/Sidebar";
+import { UserBar } from "@/components/layout/UserBar";
+import { auth } from "@/auth";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export async function AppShell({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+
+  if (!session?.user) {
+    return <main className="main login-main">{children}</main>;
+  }
+
   return (
     <div className="app-shell">
       <Sidebar />
-      <main className="main">{children}</main>
+      <main className="main">
+        <UserBar user={session.user} />
+        {children}
+      </main>
     </div>
   );
 }

@@ -3,9 +3,13 @@ import { Plus } from "lucide-react";
 import { AssignEventForm } from "@/components/forms/AssignEventForm";
 import { EventTable } from "@/components/events/EventTable";
 import { getEvents, getStudentsForForms } from "@/lib/data";
+import { canManageEvents, requireUser } from "@/lib/authz";
+
+export const dynamic = "force-dynamic";
 
 export default async function EventsPage() {
-  const [events, students] = await Promise.all([getEvents(), getStudentsForForms()]);
+  const user = await requireUser();
+  const [events, students] = await Promise.all([getEvents(), getStudentsForForms(user)]);
 
   return (
     <>
@@ -18,15 +22,17 @@ export default async function EventsPage() {
             модерацию администратором.
           </p>
         </div>
-        <Link className="button primary" href="/events/new">
-          <Plus size={17} aria-hidden="true" />
-          Добавить событие
-        </Link>
+        {canManageEvents(user.role) ? (
+          <Link className="button primary" href="/events/new">
+            <Plus size={17} aria-hidden="true" />
+            Добавить событие
+          </Link>
+        ) : null}
       </header>
 
       <EventTable rows={events.map((event) => ({ event }))} />
 
-      <AssignEventForm students={students} events={events} />
+      {canManageEvents(user.role) ? <AssignEventForm students={students} events={events} /> : null}
     </>
   );
 }

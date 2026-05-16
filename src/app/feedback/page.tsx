@@ -1,8 +1,12 @@
 import { EventFeedbackForm } from "@/components/forms/EventFeedbackForm";
 import { getEvents, getStudentsForForms } from "@/lib/data";
+import { requireUser } from "@/lib/authz";
+
+export const dynamic = "force-dynamic";
 
 export default async function FeedbackPage() {
-  const [students, events] = await Promise.all([getStudentsForForms(), getEvents()]);
+  const user = await requireUser();
+  const [students, events] = await Promise.all([getStudentsForForms(user), getEvents()]);
 
   return (
     <>

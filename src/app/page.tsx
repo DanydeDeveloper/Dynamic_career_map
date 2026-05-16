@@ -2,9 +2,13 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { StudentCard } from "@/components/students/StudentCard";
 import { getDashboardData } from "@/lib/data";
+import { canManageStudents, requireUser } from "@/lib/authz";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const students = await getDashboardData();
+  const user = await requireUser();
+  const students = await getDashboardData(user);
   const pendingCount = students.reduce((sum, student) => sum + student.proposals.length, 0);
   const plannedEventsCount = students.reduce((sum, student) => sum + student.eventMap.length, 0);
 
@@ -19,12 +23,14 @@ export default async function DashboardPage() {
             фидбэк и предложения изменений с обязательным апрувом.
           </p>
         </div>
-        <div className="toolbar">
-          <Link className="button primary" href="/students/new">
-            <Plus size={17} aria-hidden="true" />
-            Добавить ученика
-          </Link>
-        </div>
+        {canManageStudents(user.role) ? (
+          <div className="toolbar">
+            <Link className="button primary" href="/students/new">
+              <Plus size={17} aria-hidden="true" />
+              Добавить ученика
+            </Link>
+          </div>
+        ) : null}
       </header>
 
       <section className="metric-row" aria-label="Сводные показатели">

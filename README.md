@@ -7,7 +7,9 @@ MVP веб-приложения для Private.Education: динамическа
 ## Стек
 
 - Next.js + TypeScript
-- Prisma + SQLite
+- Prisma + PostgreSQL
+- Auth.js
+- Supabase PostgreSQL для нормального окружения
 - React server components
 
 ## Локальный запуск
@@ -21,15 +23,33 @@ npm run db:seed
 npm run dev
 ```
 
-## Vercel
+Для локального запуска теперь нужен PostgreSQL/Supabase connection string в `DATABASE_URL`.
 
-Для первого демо-деплоя используется локальная SQLite-база, которая создается на этапе сборки:
+Тестовые аккаунты после seed:
 
-```bash
-npm run vercel-build
+```txt
+admin@private.education / password123
+curator@private.education / password123
+parent@example.com / password123
+student@example.com / password123
 ```
 
-Это подходит для MVP-просмотра интерфейса. Для реального сохранения данных в продакшене нужно заменить SQLite на hosted PostgreSQL, например Supabase, Neon или Vercel Postgres.
+## Vercel
+
+Для деплоя в Vercel нужно добавить переменные окружения:
+
+```txt
+DATABASE_URL=postgresql://...
+AUTH_SECRET=...
+AUTH_URL=https://your-project.vercel.app
+```
+
+После подключения Supabase/PostgreSQL нужно применить схему:
+
+```bash
+npm run db:init
+npm run db:seed
+```
 
 ## Принципы MVP
 

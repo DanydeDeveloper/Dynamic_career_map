@@ -1,7 +1,29 @@
 import { prisma } from "@/lib/db";
 
-export async function getDashboardData() {
+type CurrentUser = {
+  id: string;
+  role: string;
+};
+
+function studentAccessWhere(user: CurrentUser) {
+  if (user.role === "ADMIN") {
+    return {};
+  }
+
+  if (user.role === "CURATOR") {
+    return { curatorId: user.id };
+  }
+
+  if (user.role === "PARENT") {
+    return { parentId: user.id };
+  }
+
+  return { userId: user.id };
+}
+
+export async function getDashboardData(user: CurrentUser) {
   const students = await prisma.student.findMany({
+    where: studentAccessWhere(user),
     include: {
       profile: true,
       eventMap: {
@@ -18,9 +40,12 @@ export async function getDashboardData() {
   return students;
 }
 
-export async function getStudentProfile(studentId: string) {
+export async function getStudentProfile(studentId: string, user: CurrentUser) {
   return prisma.student.findUnique({
-    where: { id: studentId },
+    where: {
+      id: studentId,
+      ...studentAccessWhere(user)
+    },
     include: {
       profile: true,
       parentRequest: true,
@@ -51,9 +76,12 @@ export async function getEvents() {
   });
 }
 
-export async function getPendingProposals() {
+export async function getPendingProposals(user: CurrentUser) {
   return prisma.changeProposal.findMany({
-    where: { status: "pending" },
+    where: {
+      status: "pending",
+      student: studentAccessWhere(user)
+    },
     include: {
       student: true,
       triggerEvent: true
@@ -62,8 +90,9 @@ export async function getPendingProposals() {
   });
 }
 
-export async function getStudentsForForms() {
+export async function getStudentsForForms(user: CurrentUser) {
   return prisma.student.findMany({
+    where: studentAccessWhere(user),
     select: {
       id: true,
       name: true,

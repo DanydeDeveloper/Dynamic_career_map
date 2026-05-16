@@ -6,7 +6,7 @@ import { EventTable } from "@/components/events/EventTable";
 import { ProfileSummary } from "@/components/students/ProfileSummary";
 import { VisibilityBars } from "@/components/students/VisibilityBars";
 import { getStudentProfile } from "@/lib/data";
-import { prisma } from "@/lib/db";
+import { canManageStudents, requireUser } from "@/lib/authz";
 import { areaLabel } from "@/lib/constants";
 import { parseJson } from "@/lib/format";
 
@@ -14,19 +14,12 @@ type StudentPageProps = {
   params: Promise<{ id: string }>;
 };
 
-export const dynamicParams = false;
-
-export async function generateStaticParams() {
-  const students = await prisma.student.findMany({
-    select: { id: true }
-  });
-
-  return students.map((student) => ({ id: student.id }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function StudentPage({ params }: StudentPageProps) {
   const { id } = await params;
-  const student = await getStudentProfile(id);
+  const user = await requireUser();
+  const student = await getStudentProfile(id, user);
 
   if (!student) {
     notFound();
@@ -47,12 +40,14 @@ export default async function StudentPage({ params }: StudentPageProps) {
             {student.grade}, {student.age} лет, {student.city}. Куратор: {student.curatorName ?? "не назначен"}.
           </p>
         </div>
-        <div className="toolbar">
-          <Link className="button" href={`/students/${student.id}/diagnostics`}>
-            <MessageSquarePlus size={17} aria-hidden="true" />
-            Диагностика
-          </Link>
-        </div>
+        {canManageStudents(user.role) ? (
+          <div className="toolbar">
+            <Link className="button" href={`/students/${student.id}/diagnostics`}>
+              <MessageSquarePlus size={17} aria-hidden="true" />
+              Диагностика
+            </Link>
+          </div>
+        ) : null}
       </header>
 
       <section className="section">

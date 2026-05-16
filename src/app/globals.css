@@ -127,6 +127,58 @@ textarea {
   padding: 34px;
 }
 
+.login-main {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.user-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.user-bar div {
+  display: grid;
+  gap: 2px;
+}
+
+.user-bar span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.login-shell {
+  width: min(520px, 100%);
+}
+
+.login-panel {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.login-form {
+  margin-top: 22px;
+}
+
+.form-error {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fde2e2;
+  color: var(--danger);
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;

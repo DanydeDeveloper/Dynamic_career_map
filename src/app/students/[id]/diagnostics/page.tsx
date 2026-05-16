@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getStudentProfile } from "@/lib/data";
-import { prisma } from "@/lib/db";
+import { canManageStudents, requireUser } from "@/lib/authz";
 import { StudentDiagnosticForm } from "@/components/forms/StudentDiagnosticForm";
 import { ParentRequestForm } from "@/components/forms/ParentRequestForm";
 
@@ -8,21 +8,14 @@ type DiagnosticsPageProps = {
   params: Promise<{ id: string }>;
 };
 
-export const dynamicParams = false;
-
-export async function generateStaticParams() {
-  const students = await prisma.student.findMany({
-    select: { id: true }
-  });
-
-  return students.map((student) => ({ id: student.id }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function StudentDiagnosticsPage({ params }: DiagnosticsPageProps) {
   const { id } = await params;
-  const student = await getStudentProfile(id);
+  const user = await requireUser();
+  const student = await getStudentProfile(id, user);
 
-  if (!student) {
+  if (!student || !canManageStudents(user.role)) {
     notFound();
   }
 
