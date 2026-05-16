@@ -1,7 +1,10 @@
-import { ParentRequestForm } from "@/components/forms/ParentRequestForm";
-import { StudentDiagnosticForm } from "@/components/forms/StudentDiagnosticForm";
+import Link from "next/link";
+import { NewStudentForm } from "@/components/forms/NewStudentForm";
+import { getStudentsForForms } from "@/lib/data";
 
-export default function DiagnosticsPage() {
+export default async function DiagnosticsPage() {
+  const students = await getStudentsForForms();
+
   return (
     <>
       <header className="page-header">
@@ -9,16 +12,26 @@ export default function DiagnosticsPage() {
           <p className="eyebrow">Диагностика</p>
           <h1 className="page-title">Первичный сбор данных</h1>
           <p className="page-description">
-            В первом MVP формы служат понятным рабочим шаблоном. Следующий шаг - привязать сохранение к базе и
-            генерации первичного профиля.
+            Создайте ученика, затем заполните анкету ребенка и отдельный родительский запрос в его профиле.
           </p>
         </div>
       </header>
 
-      <div className="grid two">
-        <StudentDiagnosticForm />
-        <ParentRequestForm />
-      </div>
+      <NewStudentForm />
+
+      <section className="section">
+        <h2 className="section-title">Продолжить диагностику существующего ученика</h2>
+        <div className="grid two">
+          {students.map((student) => (
+            <Link className="student-card" href={`/students/${student.id}/diagnostics`} key={student.id}>
+              <h3 className="student-name">{student.name}</h3>
+              <p className="muted">
+                {student.grade} · {student.city}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
     </>
   );
 }

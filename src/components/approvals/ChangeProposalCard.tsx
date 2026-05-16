@@ -1,4 +1,5 @@
 import { ClipboardCheck } from "lucide-react";
+import { updateProposalStatusAction } from "@/app/actions";
 import { proposalStatusLabels } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 
@@ -50,18 +51,34 @@ export function ChangeProposalCard({ proposal }: ChangeProposalCardProps) {
       )}
 
       <div className="proposal-actions">
-        <button className="button primary" type="button">
-          Одобрить
-        </button>
-        <button className="button" type="button">
-          Редактировать и одобрить
-        </button>
-        <button className="button" type="button">
-          Отложить
-        </button>
-        <button className="button" type="button">
-          Отклонить
-        </button>
+        <form action={updateProposalStatusAction}>
+          <input name="proposalId" type="hidden" value={proposal.id} />
+          <input name="status" type="hidden" value="approved" />
+          <button className="button primary" type="submit">
+            Одобрить
+          </button>
+        </form>
+        <form action={updateProposalStatusAction}>
+          <input name="proposalId" type="hidden" value={proposal.id} />
+          <input name="status" type="hidden" value="edited" />
+          <button className="button" type="submit">
+            Редактировать и одобрить
+          </button>
+        </form>
+        <form action={updateProposalStatusAction}>
+          <input name="proposalId" type="hidden" value={proposal.id} />
+          <input name="status" type="hidden" value="postponed" />
+          <button className="button" type="submit">
+            Отложить
+          </button>
+        </form>
+        <form action={updateProposalStatusAction}>
+          <input name="proposalId" type="hidden" value={proposal.id} />
+          <input name="status" type="hidden" value="rejected" />
+          <button className="button" type="submit">
+            Отклонить
+          </button>
+        </form>
       </div>
     </article>
   );

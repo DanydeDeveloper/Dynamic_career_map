@@ -16,9 +16,9 @@ export default async function StudentsPage() {
             Здесь педагог видит текущие профили, ближайшие события и статус предложений по каждому ребенку.
           </p>
         </div>
-        <Link className="button primary" href="/diagnostics">
+        <Link className="button primary" href="/students/new">
           <Plus size={17} aria-hidden="true" />
-          Новая диагностика
+          Новый ученик
         </Link>
       </header>
 

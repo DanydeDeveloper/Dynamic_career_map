@@ -23,6 +23,15 @@ export function buildRuleBasedProposals(signal: FeedbackSignal): RuleProposal[] 
     });
 
     proposals.push({
+      proposalType: "update_visibility",
+      description: `Зафиксировать рост насмотренности в области ${mainArea}`,
+      oldValue: "Насмотренность до посещения мероприятия",
+      newValue: "Добавить баллы насмотренности после подтвержденного фидбэка",
+      reason:
+        "Мероприятие стало новой подтвержденной пробой. Насмотренность растет отдельно от интереса и должна отражать накопленный опыт."
+    });
+
+    proposals.push({
       proposalType: "add_event",
       description: `Добавить похожее мероприятие по области ${mainArea}`,
       reason: "Положительная рефлексия дает основание проверить интерес повторной пробой в похожем, но не идентичном формате."

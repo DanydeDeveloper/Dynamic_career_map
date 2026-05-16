@@ -20,9 +20,9 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="toolbar">
-          <Link className="button primary" href="/diagnostics">
+          <Link className="button primary" href="/students/new">
             <Plus size={17} aria-hidden="true" />
-            Добавить диагностику
+            Добавить ученика
           </Link>
         </div>
       </header>

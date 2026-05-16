@@ -1,6 +1,9 @@
 import { EventFeedbackForm } from "@/components/forms/EventFeedbackForm";
+import { getEvents, getStudentsForForms } from "@/lib/data";
 
-export default function FeedbackPage() {
+export default async function FeedbackPage() {
+  const [students, events] = await Promise.all([getStudentsForForms(), getEvents()]);
+
   return (
     <>
       <header className="page-header">
@@ -14,7 +17,7 @@ export default function FeedbackPage() {
         </div>
       </header>
 
-      <EventFeedbackForm />
+      <EventFeedbackForm students={students} events={events} />
     </>
   );
 }

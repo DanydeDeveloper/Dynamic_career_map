@@ -451,6 +451,60 @@ textarea {
   gap: 9px;
 }
 
+.proposal-actions form {
+  margin: 0;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.checkbox-grid label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #33433e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.checkbox-grid input {
+  width: auto;
+  margin-top: 2px;
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.score-grid.compact {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.score-field {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.score-field span {
+  min-height: 34px;
+  color: #33433e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .split-line {
   height: 1px;
   background: var(--line);
@@ -494,6 +548,12 @@ textarea {
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-grid,
+  .score-grid,
+  .score-grid.compact {
     grid-template-columns: 1fr;
   }
 

@@ -40,8 +40,8 @@ export default async function StudentDiagnosticsPage({ params }: DiagnosticsPage
       </header>
 
       <div className="grid two">
-        <StudentDiagnosticForm />
-        <ParentRequestForm />
+        <StudentDiagnosticForm studentId={student.id} />
+        <ParentRequestForm studentId={student.id} />
       </div>
     </>
   );

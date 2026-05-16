@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { AssignEventForm } from "@/components/forms/AssignEventForm";
 import { EventTable } from "@/components/events/EventTable";
-import { getEvents } from "@/lib/data";
+import { getEvents, getStudentsForForms } from "@/lib/data";
 
 export default async function EventsPage() {
-  const events = await getEvents();
+  const [events, students] = await Promise.all([getEvents(), getStudentsForForms()]);
 
   return (
     <>
@@ -24,6 +25,8 @@ export default async function EventsPage() {
       </header>
 
       <EventTable rows={events.map((event) => ({ event }))} />
+
+      <AssignEventForm students={students} events={events} />
     </>
   );
 }
