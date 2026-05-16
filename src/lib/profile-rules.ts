@@ -4,7 +4,12 @@ export type RuleProposal = {
   proposalType:
     | "update_profile"
     | "update_visibility"
+    | "update_interest"
+    | "adjust_formats"
+    | "update_activity_format"
     | "add_event"
+    | "remove_event"
+    | "change_priority"
     | "change_event_priority"
     | "update_strategy";
   description: string;

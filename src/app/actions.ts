@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { professionalAreas } from "@/lib/constants";
 import { canManageApprovals, canManageEvents, canManageStudents, requireUser } from "@/lib/authz";
-import { generateCareerStrategyDraft, generateFeedbackProposals } from "@/lib/ai";
+import { generateDiagnosticInsightsDraft, generateFeedbackProposals } from "@/lib/ai";
 import { parseJson } from "@/lib/format";
 import { applyApprovedProposal } from "@/lib/proposal-application";
 
@@ -129,24 +129,25 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
   const likedActivities = text(formData, "likedActivities");
   const subjects = text(formData, "subjects");
   const experience = text(formData, "experience");
-  const topAreas = Object.entries(interests)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([area]) => area);
-  const summaryText =
-    text(formData, "summaryText") ||
-    `По диагностике у ученика выделяются направления: ${topAreas.join(", ")}. Важно проверять интересы через разные форматы и не сужать траекторию после одной пробы.`;
-  const curatorComment =
-    text(formData, "curatorComment") ||
-    `Любимые занятия: ${likedActivities || "не указано"}. Предметы: ${subjects || "не указано"}. Опыт: ${experience || "не указан"}.`;
-
   const visibility = Object.fromEntries(student.visibility.map((item) => [item.area, item.score]));
-  const strategy = await generateCareerStrategyDraft({
+  const insights = await generateDiagnosticInsightsDraft({
     studentName: student.name,
+    age: student.age,
+    grade: student.grade,
+    city: student.city,
     interests,
+    inclinations,
+    activityFormats,
+    stability,
     visibility,
-    parentExpectations: student.parentRequest?.expectations
+    parentExpectations: student.parentRequest?.expectations,
+    likedActivities,
+    subjects,
+    experience
   });
+  const summaryText = text(formData, "summaryText") || insights.profileSummary;
+  const curatorComment = text(formData, "curatorComment") || insights.curatorComment;
+  const strategy = insights.strategy;
 
   await prisma.diagnosticSession.create({
     data: {
@@ -162,7 +163,8 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
         subjects,
         experience,
         summaryText: text(formData, "summaryText"),
-        curatorComment: text(formData, "curatorComment")
+        curatorComment: text(formData, "curatorComment"),
+        generatedDraftSource: insights.source
       }),
       interestsJson: json(interests),
       inclinationsJson: json(inclinations),
@@ -383,24 +385,30 @@ export async function submitFeedbackAction(formData: FormData) {
   const eventAreas = parseJson<string[]>(event.professionalAreasJson, []);
   const eventFormats = parseJson<string[]>(event.activityFormatsJson, []);
   const interestScore = intValue(formData, "interestScore", 5);
+  const difficultyScore = intValue(formData, "difficultyScore", 5);
   const engagementScore = intValue(formData, "engagementScore", 5);
   const fatigueScore = intValue(formData, "fatigueScore", 5);
   const wantContinue = text(formData, "wantContinue") as "yes" | "no" | "not_sure";
+  const liked = optionalText(formData, "liked");
+  const disliked = optionalText(formData, "disliked");
+  const learned = optionalText(formData, "learned");
+  const wantTryNext = optionalText(formData, "wantTryNext");
+  const tags = checkedValues(formData, "tags");
 
   await prisma.eventFeedback.create({
     data: {
       studentId,
       eventId,
       interestScore,
-      difficultyScore: intValue(formData, "difficultyScore", 5),
+      difficultyScore,
       engagementScore,
       fatigueScore,
       wantContinue,
-      liked: optionalText(formData, "liked"),
-      disliked: optionalText(formData, "disliked"),
-      learned: optionalText(formData, "learned"),
-      wantTryNext: optionalText(formData, "wantTryNext"),
-      tagsJson: json(checkedValues(formData, "tags"))
+      liked,
+      disliked,
+      learned,
+      wantTryNext,
+      tagsJson: json(tags)
     }
   });
 
@@ -410,26 +418,36 @@ export async function submitFeedbackAction(formData: FormData) {
   });
 
   const proposals = await generateFeedbackProposals({
+    studentName: student.name,
+    eventTitle: event.title,
     interestScore,
+    difficultyScore,
     engagementScore,
     fatigueScore,
     wantContinue,
     eventAreas,
-    eventFormats
+    eventFormats,
+    liked,
+    disliked,
+    learned,
+    wantTryNext,
+    tags
   });
 
-  await prisma.changeProposal.createMany({
-    data: proposals.map((proposal) => ({
-      studentId,
-      triggerEventId: eventId,
-      proposalType: proposal.proposalType,
-      description: proposal.description,
-      oldValue: proposal.oldValue,
-      newValue: proposal.newValue,
-      reason: proposal.reason,
-      status: "pending"
-    }))
-  });
+  if (proposals.length > 0) {
+    await prisma.changeProposal.createMany({
+      data: proposals.map((proposal) => ({
+        studentId,
+        triggerEventId: eventId,
+        proposalType: proposal.proposalType,
+        description: proposal.description,
+        oldValue: proposal.oldValue,
+        newValue: proposal.newValue,
+        reason: proposal.reason,
+        status: "pending"
+      }))
+    });
+  }
 
   revalidatePath("/");
   revalidatePath("/approvals");
