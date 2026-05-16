@@ -193,7 +193,7 @@ export default async function StudentPage({ params }: StudentPageProps) {
 
       <section className="section">
         <h2 className="section-title">Карта мероприятий</h2>
-        <EventMapTimeline rows={student.eventMap} emptyText="В карте пока нет назначенных мероприятий." />
+        <EventMapTimeline rows={student.eventMap} emptyText="В карте пока нет назначенных мероприятий." showStatusControls />
       </section>
 
       {canManageStudent ? (

@@ -357,6 +357,46 @@ export async function assignEventToStudentAction(formData: FormData) {
   redirect(`/students/${studentId}`);
 }
 
+export async function updateStudentEventStatusAction(formData: FormData) {
+  const user = await requireUser();
+  const studentEventMapId = text(formData, "studentEventMapId");
+  const status = text(formData, "status");
+  const allowedStatuses = new Set(["planned", "selected", "visited", "feedback_completed"]);
+
+  if (!studentEventMapId || !allowedStatuses.has(status)) {
+    throw new Error("Некорректный статус мероприятия.");
+  }
+
+  const mapItem = await prisma.studentEventMap.findUnique({
+    where: { id: studentEventMapId },
+    include: { student: true }
+  });
+
+  if (!mapItem) {
+    throw new Error("Мероприятие в карте не найдено.");
+  }
+
+  const canUpdate =
+    user.role === "ADMIN" ||
+    mapItem.student.curatorId === user.id ||
+    mapItem.student.parentId === user.id ||
+    mapItem.student.userId === user.id;
+
+  if (!canUpdate) {
+    throw new Error("Недостаточно прав для изменения статуса мероприятия.");
+  }
+
+  await prisma.studentEventMap.update({
+    where: { id: studentEventMapId },
+    data: { status }
+  });
+
+  revalidatePath("/");
+  revalidatePath("/events");
+  revalidatePath(`/students/${mapItem.studentId}`);
+  revalidatePath("/feedback");
+}
+
 export async function submitFeedbackAction(formData: FormData) {
   const user = await requireUser();
   const studentId = text(formData, "studentId");

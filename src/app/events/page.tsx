@@ -35,7 +35,7 @@ export default async function EventsPage() {
             students.map((student) => (
               <section className="section" key={student.id}>
                 <h2 className="section-title">{student.name}</h2>
-                <EventMapTimeline rows={student.eventMap} emptyText="Пока нет назначенных мероприятий." />
+                <EventMapTimeline rows={student.eventMap} emptyText="Пока нет назначенных мероприятий." showStatusControls />
               </section>
             ))
           ) : (

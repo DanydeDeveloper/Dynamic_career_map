@@ -1,4 +1,6 @@
-import { CalendarDays } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, Check, ClipboardCheck, Footprints } from "lucide-react";
+import { updateStudentEventStatusAction } from "@/app/actions";
 import { areaLabel, eventStatusLabels, eventTypeLabels, formatLabels, priorityLabels } from "@/lib/constants";
 import { formatDate, parseJson } from "@/lib/format";
 
@@ -26,7 +28,26 @@ export type EventMapRow = {
 type EventMapTimelineProps = {
   rows: EventMapRow[];
   emptyText?: string;
+  showStatusControls?: boolean;
 };
+
+const statusSteps = [
+  {
+    value: "selected",
+    label: "Выбрано",
+    icon: Check
+  },
+  {
+    value: "visited",
+    label: "Сходили",
+    icon: Footprints
+  },
+  {
+    value: "feedback_completed",
+    label: "Обратная связь",
+    icon: ClipboardCheck
+  }
+] as const;
 
 type Horizon = {
   key: string;
@@ -79,7 +100,11 @@ function statusForRow(row: EventMapRow, now: Date) {
     return eventStatusLabels[status] ?? status;
   }
 
-  if (status === "visited" || row.event.date < now) {
+  if (status === "visited") {
+    return "Нужна обратная связь";
+  }
+
+  if (row.event.date < now && status !== "selected") {
     return "Нужна обратная связь";
   }
 
@@ -133,7 +158,11 @@ function buildHorizons(rows: EventMapRow[]) {
   ] satisfies Horizon[];
 }
 
-export function EventMapTimeline({ rows, emptyText = "Мероприятия пока не добавлены." }: EventMapTimelineProps) {
+export function EventMapTimeline({
+  rows,
+  emptyText = "Мероприятия пока не добавлены.",
+  showStatusControls = false
+}: EventMapTimelineProps) {
   if (rows.length === 0) {
     return <div className="empty-state">{emptyText}</div>;
   }
@@ -161,6 +190,8 @@ export function EventMapTimeline({ rows, emptyText = "Мероприятия п�
                   {month.rows.map((row) => {
                     const areas = parseJson<string[]>(row.event.professionalAreasJson, []);
                     const status = statusForRow(row, now);
+                    const currentStatus = row.status ?? row.event.status;
+                    const canShowControls = showStatusControls && Boolean(row.id);
 
                     return (
                       <article className="event-map-card" key={row.id ?? `${horizon.key}-${row.event.id}`}>
@@ -197,6 +228,46 @@ export function EventMapTimeline({ rows, emptyText = "Мероприятия п�
                           </div>
 
                           {row.curatorComment ? <p className="muted">{row.curatorComment}</p> : null}
+
+                          {canShowControls ? (
+                            <div className="event-status-controls" aria-label={`Статус мероприятия ${row.event.title}`}>
+                              {statusSteps.map((step) => {
+                                const Icon = step.icon;
+                                const isActive = currentStatus === step.value;
+                                const isFeedbackStep = step.value === "feedback_completed";
+
+                                if (isFeedbackStep) {
+                                  return (
+                                    <Link
+                                      className={`status-step ${isActive ? "active" : ""}`}
+                                      href="/feedback"
+                                      key={step.value}
+                                      title="Заполнить обратную связь"
+                                    >
+                                      <Icon size={15} aria-hidden="true" />
+                                      <span>{step.label}</span>
+                                    </Link>
+                                  );
+                                }
+
+                                return (
+                                  <form action={updateStudentEventStatusAction} key={step.value}>
+                                    <input name="studentEventMapId" type="hidden" value={row.id} />
+                                    <input name="status" type="hidden" value={step.value} />
+                                    <button
+                                      className={`status-step ${isActive ? "active" : ""}`}
+                                      disabled={isActive}
+                                      title={`Отметить: ${step.label.toLowerCase()}`}
+                                      type="submit"
+                                    >
+                                      <Icon size={15} aria-hidden="true" />
+                                      <span>{step.label}</span>
+                                    </button>
+                                  </form>
+                                );
+                              })}
+                            </div>
+                          ) : null}
                         </div>
                       </article>
                     );

@@ -33,6 +33,7 @@ export const eventStatusLabels: Record<string, string> = {
   draft: "Черновик",
   approved: "Одобрено",
   planned: "Запланировано",
+  selected: "Выбрано",
   visited: "Посещено",
   feedback_completed: "Обратная связь заполнена",
   change_suggested: "Есть предложение",
