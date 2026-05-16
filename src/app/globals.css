@@ -567,6 +567,47 @@ textarea {
   line-height: 1.45;
 }
 
+.recommendation-list {
+  display: grid;
+  gap: 14px;
+}
+
+.recommendation-card {
+  display: grid;
+  gap: 13px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.recommendation-card p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.recommendation-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.recommendation-columns ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.recommendation-columns li + li {
+  margin-top: 5px;
+}
+
+.recommendation-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -795,7 +836,8 @@ textarea {
   .checkbox-grid,
   .score-grid,
   .score-grid.compact,
-  .action-grid {
+  .action-grid,
+  .recommendation-columns {
     grid-template-columns: 1fr;
   }
 

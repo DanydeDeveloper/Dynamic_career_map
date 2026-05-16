@@ -87,6 +87,13 @@ export async function getEvents() {
   });
 }
 
+export async function getApprovedEvents() {
+  return prisma.event.findMany({
+    where: { status: "approved" },
+    orderBy: { date: "asc" }
+  });
+}
+
 export async function getPendingProposals(user: CurrentUser) {
   return prisma.changeProposal.findMany({
     where: {

@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MessageSquarePlus } from "lucide-react";
 import { ChangeProposalCard } from "@/components/approvals/ChangeProposalCard";
+import { EventRecommendations } from "@/components/events/EventRecommendations";
 import { EventMapTimeline } from "@/components/events/EventMapTimeline";
 import { ProfileSummary } from "@/components/students/ProfileSummary";
 import { VisibilityBars } from "@/components/students/VisibilityBars";
-import { getStudentProfile } from "@/lib/data";
+import { getApprovedEvents, getStudentProfile } from "@/lib/data";
 import { canManageApprovals, canManageStudents, requireUser } from "@/lib/authz";
 import { areaLabel } from "@/lib/constants";
+import { recommendEventsForStudent } from "@/lib/event-matching";
 import { formatDate, parseJson } from "@/lib/format";
 
 type StudentPageProps = {
@@ -29,6 +31,10 @@ export default async function StudentPage({ params }: StudentPageProps) {
   const hypotheses = parseJson<string[]>(strategy?.mainHypothesesJson ?? "[]", []);
   const areasToCheck = parseJson<string[]>(strategy?.areasToCheckJson ?? "[]", []);
   const recommendedFormats = parseJson<string[]>(strategy?.recommendedFormatsJson ?? "[]", []);
+  const canManageStudent = canManageStudents(user.role);
+  const eventRecommendations = canManageStudent
+    ? recommendEventsForStudent(student, await getApprovedEvents(), 5)
+    : [];
 
   return (
     <>
@@ -40,7 +46,7 @@ export default async function StudentPage({ params }: StudentPageProps) {
             {student.grade}, {student.age} лет, {student.city}. Куратор: {student.curatorName ?? "не назначен"}.
           </p>
         </div>
-        {canManageStudents(user.role) ? (
+        {canManageStudent ? (
           <div className="toolbar">
             <Link className="button" href={`/students/${student.id}/diagnostics`}>
               <MessageSquarePlus size={17} aria-hidden="true" />
@@ -184,6 +190,13 @@ export default async function StudentPage({ params }: StudentPageProps) {
         <h2 className="section-title">Карта мероприятий</h2>
         <EventMapTimeline rows={student.eventMap} emptyText="В карте пока нет назначенных мероприятий." />
       </section>
+
+      {canManageStudent ? (
+        <section className="section">
+          <h2 className="section-title">Подходящие мероприятия</h2>
+          <EventRecommendations studentId={student.id} recommendations={eventRecommendations} />
+        </section>
+      ) : null}
 
       <section className="section">
         <h2 className="section-title">Ранее посещаемые кружки и активности</h2>
