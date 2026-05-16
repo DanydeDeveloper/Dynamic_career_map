@@ -11,7 +11,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar role={session.user.role} />
       <main className="main">
         <UserBar user={session.user} />
         {children}

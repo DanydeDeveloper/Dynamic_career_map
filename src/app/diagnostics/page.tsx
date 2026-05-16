@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { NewStudentForm } from "@/components/forms/NewStudentForm";
 import { getStudentsForForms } from "@/lib/data";
 import { canManageStudents, requireUser } from "@/lib/authz";
@@ -7,6 +8,11 @@ export const dynamic = "force-dynamic";
 
 export default async function DiagnosticsPage() {
   const user = await requireUser();
+
+  if (!canManageStudents(user.role)) {
+    notFound();
+  }
+
   const students = await getStudentsForForms(user);
 
   return (
@@ -21,20 +27,24 @@ export default async function DiagnosticsPage() {
         </div>
       </header>
 
-      {canManageStudents(user.role) ? <NewStudentForm /> : null}
+      <NewStudentForm />
 
       <section className="section">
         <h2 className="section-title">Продолжить диагностику существующего ученика</h2>
-        <div className="grid two">
-          {students.map((student) => (
-            <Link className="student-card" href={`/students/${student.id}/diagnostics`} key={student.id}>
-              <h3 className="student-name">{student.name}</h3>
-              <p className="muted">
-                {student.grade} · {student.city}
-              </p>
-            </Link>
-          ))}
-        </div>
+        {students.length > 0 ? (
+          <div className="grid two">
+            {students.map((student) => (
+              <Link className="student-card" href={`/students/${student.id}/diagnostics`} key={student.id}>
+                <h3 className="student-name">{student.name}</h3>
+                <p className="muted">
+                  {student.grade} · {student.city}
+                </p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">Пока нет учеников для диагностики.</div>
+        )}
       </section>
     </>
   );

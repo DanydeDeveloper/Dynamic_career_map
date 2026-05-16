@@ -2,19 +2,76 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ClipboardCheck, LayoutDashboard, ListChecks, MessageSquareText, UsersRound } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardCheck,
+  LayoutDashboard,
+  ListChecks,
+  MessageSquareText,
+  UsersRound
+} from "lucide-react";
+import { type AppRole, isAppRole, roleLabel } from "@/lib/roles";
+import { allRoles, managerRoles } from "@/lib/route-access";
 
-const navItems = [
-  { href: "/", label: "Панель", icon: LayoutDashboard },
-  { href: "/students", label: "Ученики", icon: UsersRound },
-  { href: "/events", label: "Мероприятия", icon: CalendarDays },
-  { href: "/feedback", label: "Фидбэк", icon: MessageSquareText },
-  { href: "/approvals", label: "Апрув", icon: ClipboardCheck },
-  { href: "/diagnostics", label: "Диагностика", icon: ListChecks }
+type SidebarProps = {
+  role: string;
+};
+
+type NavItem = {
+  href: string;
+  label: string | Partial<Record<AppRole, string>>;
+  icon: typeof LayoutDashboard;
+  roles: AppRole[];
+};
+
+const navItems: NavItem[] = [
+  { href: "/", label: "Кабинет", icon: LayoutDashboard, roles: allRoles },
+  {
+    href: "/students",
+    label: {
+      ADMIN: "Ученики",
+      CURATOR: "Ученики",
+      PARENT: "Ребенок",
+      STUDENT: "Мой профиль"
+    },
+    icon: UsersRound,
+    roles: allRoles
+  },
+  {
+    href: "/events",
+    label: {
+      ADMIN: "Мероприятия",
+      CURATOR: "Мероприятия",
+      PARENT: "Карта мероприятий",
+      STUDENT: "Карта мероприятий"
+    },
+    icon: CalendarDays,
+    roles: allRoles
+  },
+  { href: "/feedback", label: "Фидбэк", icon: MessageSquareText, roles: allRoles },
+  { href: "/approvals", label: "Апрув", icon: ClipboardCheck, roles: managerRoles },
+  { href: "/diagnostics", label: "Диагностика", icon: ListChecks, roles: managerRoles }
 ];
 
-export function Sidebar() {
+const roleNotes: Record<AppRole, string> = {
+  ADMIN: "Полный контур продукта: ученики, мероприятия, предложения изменений и контроль рабочих процессов.",
+  CURATOR: "Педагог ведет диагностику, карту мероприятий, фидбэк и подтверждает изменения перед обновлением профиля.",
+  PARENT: "Родитель видит профиль ребенка, назначенные мероприятия и может оставить обратную связь после участия.",
+  STUDENT: "Ученик видит свою карту, ближайшие пробы и может заполнить впечатления после мероприятия."
+};
+
+function getItemLabel(item: NavItem, role: AppRole) {
+  if (typeof item.label === "string") {
+    return item.label;
+  }
+
+  return item.label[role] ?? item.label.CURATOR ?? item.href;
+}
+
+export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
+  const appRole = isAppRole(role) ? role : "CURATOR";
+  const visibleItems = navItems.filter((item) => item.roles.includes(appRole));
 
   return (
     <aside className="sidebar">
@@ -26,23 +83,23 @@ export function Sidebar() {
         </div>
       </div>
 
+      <div className="role-pill">{roleLabel(appRole)}</div>
+
       <nav className="nav-list" aria-label="Главная навигация">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 
           return (
             <Link key={item.href} className={`nav-link ${isActive ? "active" : ""}`} href={item.href}>
               <Icon size={18} aria-hidden="true" />
-              <span>{item.label}</span>
+              <span>{getItemLabel(item, appRole)}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="sidebar-note">
-        MVP без авторизации. Все решения системы проходят через педагога: предложения не меняют профиль без апрува.
-      </div>
+      <div className="sidebar-note">{roleNotes[appRole]}</div>
     </aside>
   );
 }

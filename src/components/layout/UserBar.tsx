@@ -1,4 +1,5 @@
 import { signOut } from "@/auth";
+import { roleLabel } from "@/lib/roles";
 
 type UserBarProps = {
   user: {
@@ -8,19 +9,12 @@ type UserBarProps = {
   };
 };
 
-const roleLabels: Record<string, string> = {
-  ADMIN: "Администратор",
-  CURATOR: "Педагог",
-  STUDENT: "Ученик",
-  PARENT: "Родитель"
-};
-
 export function UserBar({ user }: UserBarProps) {
   return (
     <div className="user-bar">
       <div>
         <strong>{user.name ?? user.email}</strong>
-        <span>{roleLabels[user.role] ?? user.role}</span>
+        <span>{roleLabel(user.role)}</span>
       </div>
       <form
         action={async () => {

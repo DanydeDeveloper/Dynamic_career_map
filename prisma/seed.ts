@@ -154,6 +154,44 @@ async function main() {
     }
   });
 
+  await prisma.diagnosticSession.create({
+    data: {
+      studentId: student.id,
+      authorId: curator.id,
+      source: "seed",
+      status: "applied",
+      likedActivities: "Делать игры, собирать модели и решать практические задачи",
+      subjects: "Математика, технология, биология",
+      experience: "Scratch, городской фестиваль науки, школьные творческие проекты",
+      rawAnswersJson: json({
+        likedActivities: "Делать игры, собирать модели и решать практические задачи",
+        subjects: "Математика, технология, биология",
+        experience: "Scratch, городской фестиваль науки, школьные творческие проекты"
+      }),
+      interestsJson: json({ IT: 7, engineering: 6, science: 5, design: 4, medicine: 2 }),
+      inclinationsJson: json({
+        analytical_thinking: 8,
+        creative_thinking: 6,
+        communication: 5,
+        research_orientation: 7,
+        practical_making: 8
+      }),
+      activityFormatsJson: json({
+        teamwork: 8,
+        individual_work: 5,
+        competition: 6,
+        project_work: 9,
+        public_speaking: 4
+      }),
+      stabilityJson: json({ IT: "growing", engineering: "unstable", science: "not_checked" }),
+      summaryText:
+        "Алиса уверенно откликается на практические и проектные форматы. Сейчас выражен интерес к цифровым продуктам и инженерным задачам, но траекторию важно не сужать только до IT.",
+      curatorComment:
+        "Проверить инженерные и естественно-научные форматы через практику, не через лекции.",
+      appliedToProfileAt: new Date()
+    }
+  });
+
   const events = await prisma.event.createManyAndReturn({
     data: [
       {

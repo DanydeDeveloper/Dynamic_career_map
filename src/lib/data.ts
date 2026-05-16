@@ -65,6 +65,17 @@ export async function getStudentProfile(studentId: string, user: CurrentUser) {
       proposals: {
         include: { triggerEvent: true },
         orderBy: { createdAt: "desc" }
+      },
+      diagnostics: {
+        include: {
+          author: {
+            select: {
+              name: true,
+              email: true
+            }
+          }
+        },
+        orderBy: { createdAt: "desc" }
       }
     }
   });

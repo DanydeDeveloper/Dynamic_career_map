@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -16,20 +16,21 @@ enum UserRole {
 }
 
 model User {
-  id               String    @id @default(cuid())
-  name             String?
-  email            String    @unique
-  emailVerified    DateTime?
-  image            String?
-  passwordHash     String?
-  role             UserRole  @default(CURATOR)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  accounts         Account[]
-  sessions         Session[]
-  curatedStudents  Student[] @relation("StudentCurator")
-  parentStudents   Student[] @relation("StudentParent")
-  studentProfile   Student?  @relation("StudentUser")
+  id                  String              @id @default(cuid())
+  name                String?
+  email               String              @unique
+  emailVerified       DateTime?
+  image               String?
+  passwordHash        String?
+  role                UserRole            @default(CURATOR)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  accounts            Account[]
+  sessions            Session[]
+  curatedStudents     Student[]           @relation("StudentCurator")
+  parentStudents      Student[]           @relation("StudentParent")
+  studentProfile      Student?            @relation("StudentUser")
+  diagnosticsAuthored DiagnosticSession[]
 }
 
 model Account {
@@ -69,70 +70,93 @@ model VerificationToken {
 }
 
 model Student {
-  id              String            @id @default(cuid())
-  name            String
-  age             Int
-  grade           String
-  city            String
-  school          String?
-  parentName      String?
-  curatorName     String?
-  parentId        String?
-  curatorId       String?
-  userId          String?           @unique
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  user            User?             @relation("StudentUser", fields: [userId], references: [id], onDelete: SetNull)
-  parent          User?             @relation("StudentParent", fields: [parentId], references: [id], onDelete: SetNull)
-  curator         User?             @relation("StudentCurator", fields: [curatorId], references: [id], onDelete: SetNull)
-  profile         StudentProfile?
-  parentRequest   ParentRequest?
-  pastActivities  PastActivity[]
-  eventMap        StudentEventMap[]
-  feedback        EventFeedback[]
-  visibility      CareerVisibility[]
-  proposals       ChangeProposal[]
-  strategy        CareerStrategy?
+  id             String              @id @default(cuid())
+  name           String
+  age            Int
+  grade          String
+  city           String
+  school         String?
+  parentName     String?
+  curatorName    String?
+  parentId       String?
+  curatorId      String?
+  userId         String?             @unique
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  user           User?               @relation("StudentUser", fields: [userId], references: [id], onDelete: SetNull)
+  parent         User?               @relation("StudentParent", fields: [parentId], references: [id], onDelete: SetNull)
+  curator        User?               @relation("StudentCurator", fields: [curatorId], references: [id], onDelete: SetNull)
+  profile        StudentProfile?
+  parentRequest  ParentRequest?
+  pastActivities PastActivity[]
+  eventMap       StudentEventMap[]
+  feedback       EventFeedback[]
+  visibility     CareerVisibility[]
+  proposals      ChangeProposal[]
+  strategy       CareerStrategy?
+  diagnostics    DiagnosticSession[]
 }
 
 model StudentProfile {
-  id                    String   @id @default(cuid())
-  studentId             String   @unique
-  interestsJson         String
-  inclinationsJson      String
-  activityFormatsJson   String
-  stabilityJson         String
-  summaryText           String
-  curatorComment        String?
-  updatedAt             DateTime @updatedAt
-  student               Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  studentId           String   @unique
+  interestsJson       String
+  inclinationsJson    String
+  activityFormatsJson String
+  stabilityJson       String
+  summaryText         String
+  curatorComment      String?
+  updatedAt           DateTime @updatedAt
+  student             Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model DiagnosticSession {
+  id                  String    @id @default(cuid())
+  studentId           String
+  authorId            String?
+  source              String    @default("curator_form")
+  status              String    @default("applied")
+  likedActivities     String?
+  subjects            String?
+  experience          String?
+  rawAnswersJson      String
+  interestsJson       String
+  inclinationsJson    String
+  activityFormatsJson String
+  stabilityJson       String
+  summaryText         String
+  curatorComment      String?
+  appliedToProfileAt  DateTime?
+  createdAt           DateTime  @default(now())
+  student             Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  author              User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
 }
 
 model ParentRequest {
-  id                   String   @id @default(cuid())
-  studentId            String   @unique
-  expectations          String
-  preferredAreasJson    String
-  restrictedAreasJson   String
-  budget                Int?
-  availableTime         String?
-  comment               String?
-  createdAt             DateTime @default(now())
-  student               Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  studentId           String   @unique
+  expectations        String
+  preferredAreasJson  String
+  restrictedAreasJson String
+  budget              Int?
+  availableTime       String?
+  comment             String?
+  createdAt           DateTime @default(now())
+  student             Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model PastActivity {
-  id                String  @id @default(cuid())
-  studentId         String
-  title             String
-  activityType      String
-  area              String
-  period            String
-  result            String?
-  studentReaction   String?
-  parentComment     String?
-  curatorComment    String?
-  student           Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id              String  @id @default(cuid())
+  studentId       String
+  title           String
+  activityType    String
+  area            String
+  period          String
+  result          String?
+  studentReaction String?
+  parentComment   String?
+  curatorComment  String?
+  student         Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Event {
@@ -160,81 +184,81 @@ model Event {
 }
 
 model StudentEventMap {
-  id               String   @id @default(cuid())
-  studentId        String
-  eventId          String
-  priority         String
-  status           String   @default("planned")
-  goalForStudent   String
-  curatorComment   String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  student          Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  studentId      String
+  eventId        String
+  priority       String
+  status         String   @default("planned")
+  goalForStudent String
+  curatorComment String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, eventId])
 }
 
 model EventFeedback {
-  id                String   @id @default(cuid())
-  studentId         String
-  eventId           String
-  interestScore     Int
-  difficultyScore   Int
-  engagementScore   Int
-  fatigueScore      Int
-  wantContinue      String
-  liked             String?
-  disliked          String?
-  learned           String?
-  wantTryNext       String?
-  tagsJson          String
-  createdAt         DateTime @default(now())
-  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  studentId       String
+  eventId         String
+  interestScore   Int
+  difficultyScore Int
+  engagementScore Int
+  fatigueScore    Int
+  wantContinue    String
+  liked           String?
+  disliked        String?
+  learned         String?
+  wantTryNext     String?
+  tagsJson        String
+  createdAt       DateTime @default(now())
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 }
 
 model CareerVisibility {
-  id              String   @id @default(cuid())
-  studentId       String
-  area            String
-  score           Int
-  level           String
-  evidenceJson    String
-  updatedAt       DateTime @updatedAt
-  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  studentId    String
+  area         String
+  score        Int
+  level        String
+  evidenceJson String
+  updatedAt    DateTime @updatedAt
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, area])
 }
 
 model ChangeProposal {
-  id               String    @id @default(cuid())
-  studentId        String
-  triggerEventId   String?
-  proposalType     String
-  description      String
-  oldValue         String?
-  newValue         String?
-  reason           String
-  status           String    @default("pending")
-  createdAt        DateTime  @default(now())
-  approvedBy       String?
-  approvedAt       DateTime?
-  student          Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  triggerEvent     Event?    @relation(fields: [triggerEventId], references: [id], onDelete: SetNull)
+  id             String    @id @default(cuid())
+  studentId      String
+  triggerEventId String?
+  proposalType   String
+  description    String
+  oldValue       String?
+  newValue       String?
+  reason         String
+  status         String    @default("pending")
+  createdAt      DateTime  @default(now())
+  approvedBy     String?
+  approvedAt     DateTime?
+  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  triggerEvent   Event?    @relation(fields: [triggerEventId], references: [id], onDelete: SetNull)
 }
 
 model CareerStrategy {
-  id                       String   @id @default(cuid())
-  studentId                String   @unique
-  strategySummary          String
-  mainHypothesesJson       String
-  areasToExpandJson        String
-  areasToCheckJson         String
-  recommendedFormatsJson   String
-  risksJson                String
-  next3MonthsFocus         String
-  next12MonthsFocus        String
-  updatedAt                DateTime @updatedAt
-  student                  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id                     String   @id @default(cuid())
+  studentId              String   @unique
+  strategySummary        String
+  mainHypothesesJson     String
+  areasToExpandJson      String
+  areasToCheckJson       String
+  recommendedFormatsJson String
+  risksJson              String
+  next3MonthsFocus       String
+  next12MonthsFocus      String
+  updatedAt              DateTime @updatedAt
+  student                Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }

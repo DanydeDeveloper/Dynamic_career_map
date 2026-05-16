@@ -16,9 +16,10 @@ type ChangeProposalCardProps = {
     student?: { name: string } | null;
     triggerEvent?: { title: string } | null;
   };
+  showActions?: boolean;
 };
 
-export function ChangeProposalCard({ proposal }: ChangeProposalCardProps) {
+export function ChangeProposalCard({ proposal, showActions = true }: ChangeProposalCardProps) {
   return (
     <article className="proposal-card">
       <div className="student-card-top">
@@ -50,36 +51,38 @@ export function ChangeProposalCard({ proposal }: ChangeProposalCardProps) {
         </div>
       )}
 
-      <div className="proposal-actions">
-        <form action={updateProposalStatusAction}>
-          <input name="proposalId" type="hidden" value={proposal.id} />
-          <input name="status" type="hidden" value="approved" />
-          <button className="button primary" type="submit">
-            Одобрить
-          </button>
-        </form>
-        <form action={updateProposalStatusAction}>
-          <input name="proposalId" type="hidden" value={proposal.id} />
-          <input name="status" type="hidden" value="edited" />
-          <button className="button" type="submit">
-            Редактировать и одобрить
-          </button>
-        </form>
-        <form action={updateProposalStatusAction}>
-          <input name="proposalId" type="hidden" value={proposal.id} />
-          <input name="status" type="hidden" value="postponed" />
-          <button className="button" type="submit">
-            Отложить
-          </button>
-        </form>
-        <form action={updateProposalStatusAction}>
-          <input name="proposalId" type="hidden" value={proposal.id} />
-          <input name="status" type="hidden" value="rejected" />
-          <button className="button" type="submit">
-            Отклонить
-          </button>
-        </form>
-      </div>
+      {showActions ? (
+        <div className="proposal-actions">
+          <form action={updateProposalStatusAction}>
+            <input name="proposalId" type="hidden" value={proposal.id} />
+            <input name="status" type="hidden" value="approved" />
+            <button className="button primary" type="submit">
+              Одобрить
+            </button>
+          </form>
+          <form action={updateProposalStatusAction}>
+            <input name="proposalId" type="hidden" value={proposal.id} />
+            <input name="status" type="hidden" value="edited" />
+            <button className="button" type="submit">
+              Редактировать и одобрить
+            </button>
+          </form>
+          <form action={updateProposalStatusAction}>
+            <input name="proposalId" type="hidden" value={proposal.id} />
+            <input name="status" type="hidden" value="postponed" />
+            <button className="button" type="submit">
+              Отложить
+            </button>
+          </form>
+          <form action={updateProposalStatusAction}>
+            <input name="proposalId" type="hidden" value={proposal.id} />
+            <input name="status" type="hidden" value="rejected" />
+            <button className="button" type="submit">
+              Отклонить
+            </button>
+          </form>
+        </div>
+      ) : null}
     </article>
   );
 }

@@ -133,6 +133,12 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([area]) => area);
+  const summaryText =
+    text(formData, "summaryText") ||
+    `По диагностике у ученика выделяются направления: ${topAreas.join(", ")}. Важно проверять интересы через разные форматы и не сужать траекторию после одной пробы.`;
+  const curatorComment =
+    text(formData, "curatorComment") ||
+    `Любимые занятия: ${likedActivities || "не указано"}. Предметы: ${subjects || "не указано"}. Опыт: ${experience || "не указан"}.`;
 
   const visibility = Object.fromEntries(student.visibility.map((item) => [item.area, item.score]));
   const strategy = await generateCareerStrategyDraft({
@@ -142,6 +148,32 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
     parentExpectations: student.parentRequest?.expectations
   });
 
+  await prisma.diagnosticSession.create({
+    data: {
+      studentId,
+      authorId: user.id,
+      source: "curator_form",
+      status: "applied",
+      likedActivities: likedActivities || null,
+      subjects: subjects || null,
+      experience: experience || null,
+      rawAnswersJson: json({
+        likedActivities,
+        subjects,
+        experience,
+        summaryText: text(formData, "summaryText"),
+        curatorComment: text(formData, "curatorComment")
+      }),
+      interestsJson: json(interests),
+      inclinationsJson: json(inclinations),
+      activityFormatsJson: json(activityFormats),
+      stabilityJson: json(stability),
+      summaryText,
+      curatorComment,
+      appliedToProfileAt: new Date()
+    }
+  });
+
   await prisma.studentProfile.upsert({
     where: { studentId },
     update: {
@@ -149,12 +181,8 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
       inclinationsJson: json(inclinations),
       activityFormatsJson: json(activityFormats),
       stabilityJson: json(stability),
-      summaryText:
-        text(formData, "summaryText") ||
-        `По диагностике у ученика выделяются направления: ${topAreas.join(", ")}. Важно проверять интересы через разные форматы и не сужать траекторию после одной пробы.`,
-      curatorComment:
-        text(formData, "curatorComment") ||
-        `Любимые занятия: ${likedActivities || "не указано"}. Предметы: ${subjects || "не указано"}. Опыт: ${experience || "не указан"}.`
+      summaryText,
+      curatorComment
     },
     create: {
       studentId,
@@ -162,12 +190,8 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
       inclinationsJson: json(inclinations),
       activityFormatsJson: json(activityFormats),
       stabilityJson: json(stability),
-      summaryText:
-        text(formData, "summaryText") ||
-        `По диагностике у ученика выделяются направления: ${topAreas.join(", ")}. Важно проверять интересы через разные форматы и не сужать траекторию после одной пробы.`,
-      curatorComment:
-        text(formData, "curatorComment") ||
-        `Любимые занятия: ${likedActivities || "не указано"}. Предметы: ${subjects || "не указано"}. Опыт: ${experience || "не указан"}.`
+      summaryText,
+      curatorComment
     }
   });
 
@@ -410,7 +434,7 @@ export async function submitFeedbackAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/approvals");
   revalidatePath(`/students/${studentId}`);
-  redirect("/approvals");
+  redirect(canManageApprovals(user.role) ? "/approvals" : `/students/${studentId}`);
 }
 
 export async function updateProposalStatusAction(formData: FormData) {

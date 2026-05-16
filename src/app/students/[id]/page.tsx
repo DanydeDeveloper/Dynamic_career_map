@@ -6,9 +6,9 @@ import { EventTable } from "@/components/events/EventTable";
 import { ProfileSummary } from "@/components/students/ProfileSummary";
 import { VisibilityBars } from "@/components/students/VisibilityBars";
 import { getStudentProfile } from "@/lib/data";
-import { canManageStudents, requireUser } from "@/lib/authz";
+import { canManageApprovals, canManageStudents, requireUser } from "@/lib/authz";
 import { areaLabel } from "@/lib/constants";
-import { parseJson } from "@/lib/format";
+import { formatDate, parseJson } from "@/lib/format";
 
 type StudentPageProps = {
   params: Promise<{ id: string }>;
@@ -57,6 +57,72 @@ export default async function StudentPage({ params }: StudentPageProps) {
           </div>
           <div className="panel-body">
             <ProfileSummary profile={student.profile} />
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="panel">
+          <div className="panel-header">
+            <h2 className="panel-title">История диагностики</h2>
+          </div>
+          <div className="panel-body">
+            {student.diagnostics.length > 0 ? (
+              <div className="diagnostic-history">
+                {student.diagnostics.map((diagnostic) => {
+                  const interests = parseJson<Record<string, number>>(diagnostic.interestsJson, {});
+                  const topInterests = Object.entries(interests)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 3);
+
+                  return (
+                    <article className="diagnostic-item" key={diagnostic.id}>
+                      <div className="student-card-top">
+                        <div>
+                          <h3 className="student-name">{formatDate(diagnostic.createdAt)}</h3>
+                          <p className="muted">
+                            Автор: {diagnostic.author?.name ?? diagnostic.author?.email ?? "не указан"}
+                          </p>
+                        </div>
+                        <span className="tag primary">
+                          {diagnostic.appliedToProfileAt ? "Применено к профилю" : diagnostic.status}
+                        </span>
+                      </div>
+
+                      <p>{diagnostic.summaryText}</p>
+
+                      <div className="tags">
+                        {topInterests.map(([area, score]) => (
+                          <span className="tag" key={area}>
+                            {areaLabel(area)}: {score}/10
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="diagnostic-notes">
+                        {diagnostic.likedActivities ? (
+                          <p>
+                            <strong>Нравится:</strong> {diagnostic.likedActivities}
+                          </p>
+                        ) : null}
+                        {diagnostic.subjects ? (
+                          <p>
+                            <strong>Предметы:</strong> {diagnostic.subjects}
+                          </p>
+                        ) : null}
+                        {diagnostic.experience ? (
+                          <p>
+                            <strong>Опыт:</strong> {diagnostic.experience}
+                          </p>
+                        ) : null}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="empty-state">Отдельных диагностических сессий пока нет.</div>
+            )}
           </div>
         </div>
       </section>
@@ -151,7 +217,9 @@ export default async function StudentPage({ params }: StudentPageProps) {
         <h2 className="section-title">Предложения изменений</h2>
         <div className="grid">
           {student.proposals.length > 0 ? (
-            student.proposals.map((proposal) => <ChangeProposalCard key={proposal.id} proposal={proposal} />)
+            student.proposals.map((proposal) => (
+              <ChangeProposalCard key={proposal.id} proposal={proposal} showActions={canManageApprovals(user.role)} />
+            ))
           ) : (
             <div className="empty-state">Активных предложений пока нет.</div>
           )}
