@@ -6,6 +6,7 @@ const env = {
 };
 
 function run(command, args) {
+  console.log(`[vercel-build:v2] ${command} ${args.join(" ")}`);
   execFileSync(command, args, {
     stdio: "inherit",
     env,
@@ -13,6 +14,7 @@ function run(command, args) {
   });
 }
 
+console.log(`[vercel-build:v2] DATABASE_URL=${env.DATABASE_URL}`);
 run("npx", ["prisma", "generate"]);
 run("npm", ["run", "db:init"]);
 run("npm", ["run", "db:seed"]);
