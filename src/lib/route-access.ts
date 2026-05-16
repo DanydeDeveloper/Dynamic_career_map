@@ -14,7 +14,8 @@ export const routeAccessRules: RouteAccessRule[] = [
   { label: "Диагностика", pathPrefix: "/diagnostics", roles: managerRoles },
   { label: "Новый ученик", pathPrefix: "/students/new", roles: managerRoles },
   { label: "Диагностика ученика", pathPrefix: "/students/:id/diagnostics", roles: managerRoles },
-  { label: "Новое мероприятие", pathPrefix: "/events/new", roles: managerRoles }
+  { label: "Новое мероприятие", pathPrefix: "/events/new", roles: managerRoles },
+  { label: "Источники мероприятий", pathPrefix: "/events/sources", roles: managerRoles }
 ];
 
 function matchesRule(pathname: string, rule: RouteAccessRule) {

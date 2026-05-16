@@ -161,6 +161,7 @@ model PastActivity {
 
 model Event {
   id                    String            @id @default(cuid())
+  sourceId              String?
   title                 String
   date                  DateTime
   time                  String
@@ -176,11 +177,29 @@ model Event {
   activityFormatsJson   String
   goal                  String
   sourceUrl             String?
+  qualityNotes          String?
   status                String            @default("approved")
+  moderatedById         String?
+  moderatedAt           DateTime?
   createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @default(now()) @updatedAt
+  source                EventSource?      @relation(fields: [sourceId], references: [id], onDelete: SetNull)
   studentMaps           StudentEventMap[]
   feedback              EventFeedback[]
   proposals             ChangeProposal[]
+}
+
+model EventSource {
+  id             String   @id @default(cuid())
+  title          String
+  url            String
+  city           String?
+  focusAreasJson String   @default("[]")
+  comment        String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  events         Event[]
 }
 
 model StudentEventMap {

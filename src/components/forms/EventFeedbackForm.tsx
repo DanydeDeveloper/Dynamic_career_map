@@ -1,4 +1,5 @@
 import { submitFeedbackAction } from "@/app/actions";
+import { SubmitButton } from "@/components/forms/SubmitButton";
 
 type EventFeedbackFormProps = {
   students: Array<{ id: string; name: string; grade: string }>;
@@ -107,9 +108,7 @@ export function EventFeedbackForm({ students, events }: EventFeedbackFormProps) 
         </div>
 
         <div className="field full">
-          <button className="button primary" type="submit">
-            Создать предложение изменений
-          </button>
+          <SubmitButton pendingText="Создаем предложения...">Создать предложение изменений</SubmitButton>
         </div>
       </form>
     </section>

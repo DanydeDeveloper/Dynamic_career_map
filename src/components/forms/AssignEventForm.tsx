@@ -1,4 +1,5 @@
 import { assignEventToStudentAction } from "@/app/actions";
+import { SubmitButton } from "@/components/forms/SubmitButton";
 import { priorityLabels } from "@/lib/constants";
 
 type AssignEventFormProps = {
@@ -52,9 +53,7 @@ export function AssignEventForm({ students, events }: AssignEventFormProps) {
           <textarea id="curatorComment" name="curatorComment" />
         </div>
         <div className="field full">
-          <button className="button primary" type="submit">
-            Добавить в карту ученика
-          </button>
+          <SubmitButton pendingText="Добавляем в карту...">Добавить в карту ученика</SubmitButton>
         </div>
       </form>
     </section>

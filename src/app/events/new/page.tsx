@@ -1,5 +1,7 @@
 import { createEventAction } from "@/app/actions";
-import { eventTypeLabels, professionalAreas, russianCities } from "@/lib/constants";
+import { SubmitButton } from "@/components/forms/SubmitButton";
+import { eventStatusLabels, eventTypeLabels, professionalAreas, russianCities } from "@/lib/constants";
+import { getEventSources } from "@/lib/data";
 import { canManageEvents, requireUser } from "@/lib/authz";
 import { notFound } from "next/navigation";
 
@@ -12,6 +14,8 @@ export default async function NewEventPage() {
     notFound();
   }
 
+  const sources = await getEventSources();
+
   return (
     <>
       <header className="page-header">
@@ -19,8 +23,7 @@ export default async function NewEventPage() {
           <p className="eyebrow">Новое мероприятие</p>
           <h1 className="page-title">Ручное добавление события</h1>
           <p className="page-description">
-            Это форма первого этапа. Она задает нужную структуру события, а сохранение в базу подключим следующим
-            проходом вместе с модерацией.
+            Добавьте событие как черновик, отправьте на модерацию или сразу одобрите, если качество уже проверено.
           </p>
         </div>
       </header>
@@ -118,9 +121,21 @@ export default async function NewEventPage() {
           </div>
           <div className="field">
             <label htmlFor="status">Статус</label>
-            <select id="status" name="status">
+            <select id="status" name="status" defaultValue="draft">
               <option value="draft">Черновик</option>
-              <option value="approved">Одобрено</option>
+              <option value="needs_review">На модерации</option>
+              <option value="approved">{eventStatusLabels.approved}</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="sourceId">Источник из базы</label>
+            <select id="sourceId" name="sourceId">
+              <option value="">Без источника</option>
+              {sources.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.title}
+                </option>
+              ))}
             </select>
           </div>
           <div className="field">
@@ -132,13 +147,15 @@ export default async function NewEventPage() {
             <input id="sourceUrl" name="sourceUrl" placeholder="https://..." />
           </div>
           <div className="field full">
+            <label htmlFor="qualityNotes">Заметки модерации</label>
+            <textarea id="qualityNotes" name="qualityNotes" placeholder="Что проверить: возраст, дата, стоимость, надежность источника..." />
+          </div>
+          <div className="field full">
             <label htmlFor="goal">Цель участия</label>
             <textarea id="goal" name="goal" placeholder="Какую гипотезу проверяет мероприятие?" />
           </div>
           <div className="field full">
-            <button className="button primary" type="submit">
-              Сохранить событие
-            </button>
+            <SubmitButton pendingText="Сохраняем событие...">Сохранить событие</SubmitButton>
           </div>
         </form>
       </section>

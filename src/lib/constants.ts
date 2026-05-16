@@ -31,13 +31,22 @@ export const priorityLabels: Record<string, string> = {
 
 export const eventStatusLabels: Record<string, string> = {
   draft: "Черновик",
+  needs_review: "На модерации",
   approved: "Одобрено",
+  rejected: "Отклонено",
   planned: "Запланировано",
   selected: "Выбрано",
   visited: "Посещено",
   feedback_completed: "Обратная связь заполнена",
   change_suggested: "Есть предложение",
   completed: "Завершено"
+};
+
+export const eventModerationStatusLabels: Record<string, string> = {
+  draft: "Черновики",
+  needs_review: "На модерации",
+  approved: "Одобрено",
+  rejected: "Отклонено"
 };
 
 export const proposalStatusLabels: Record<string, string> = {

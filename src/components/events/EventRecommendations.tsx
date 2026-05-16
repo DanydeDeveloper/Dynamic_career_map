@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import { assignEventToStudentAction } from "@/app/actions";
+import { SubmitButton } from "@/components/forms/SubmitButton";
 import { areaLabel, eventTypeLabels, formatLabels } from "@/lib/constants";
 import { formatDate, formatMoney, parseJson } from "@/lib/format";
 import type { EventRecommendation } from "@/lib/event-matching";
@@ -75,9 +76,7 @@ export function EventRecommendations({ studentId, recommendations }: EventRecomm
               <input name="priority" type="hidden" value={recommendation.score >= 75 ? "required" : "recommended"} />
               <input name="goalForStudent" type="hidden" value={recommendation.goalForStudent} />
               <input name="curatorComment" type="hidden" value={recommendation.curatorComment} />
-              <button className="button primary" type="submit">
-                Назначить в карту
-              </button>
+              <SubmitButton pendingText="Назначаем...">Назначить в карту</SubmitButton>
             </form>
           </article>
         );

@@ -293,6 +293,7 @@ export async function createEventAction(formData: FormData) {
 
   await prisma.event.create({
     data: {
+      sourceId: optionalText(formData, "sourceId"),
       title: text(formData, "title"),
       date: firstDateTime(text(formData, "date")),
       time: text(formData, "time") || "12:00",
@@ -308,12 +309,70 @@ export async function createEventAction(formData: FormData) {
       activityFormatsJson: json(checkedValues(formData, "activityFormats")),
       goal: text(formData, "goal") || "Проверить интерес через профессиональную пробу",
       sourceUrl: optionalText(formData, "sourceUrl"),
-      status: text(formData, "status") || "approved"
+      qualityNotes: optionalText(formData, "qualityNotes"),
+      status: text(formData, "status") || "draft",
+      moderatedById: text(formData, "status") === "approved" ? user.id : null,
+      moderatedAt: text(formData, "status") === "approved" ? new Date() : null
     }
   });
 
   revalidatePath("/events");
   redirect("/events");
+}
+
+export async function createEventSourceAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user.role)) {
+    throw new Error("Недостаточно прав для создания источника.");
+  }
+
+  const title = text(formData, "title");
+  const url = text(formData, "url");
+
+  if (!title || !url) {
+    throw new Error("Нужно указать название и URL источника.");
+  }
+
+  await prisma.eventSource.create({
+    data: {
+      title,
+      url,
+      city: optionalText(formData, "city"),
+      focusAreasJson: json(checkedValues(formData, "focusAreas")),
+      comment: optionalText(formData, "comment"),
+      isActive: text(formData, "isActive") !== "off"
+    }
+  });
+
+  revalidatePath("/events");
+  revalidatePath("/events/sources");
+}
+
+export async function updateEventModerationStatusAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user.role)) {
+    throw new Error("Недостаточно прав для модерации мероприятий.");
+  }
+
+  const eventId = text(formData, "eventId");
+  const status = text(formData, "status");
+  const allowedStatuses = new Set(["draft", "needs_review", "approved", "rejected"]);
+
+  if (!eventId || !allowedStatuses.has(status)) {
+    throw new Error("Некорректный статус модерации.");
+  }
+
+  await prisma.event.update({
+    where: { id: eventId },
+    data: {
+      status,
+      moderatedById: status === "approved" || status === "rejected" ? user.id : null,
+      moderatedAt: status === "approved" || status === "rejected" ? new Date() : null
+    }
+  });
+
+  revalidatePath("/events");
+  revalidatePath(`/events?status=${status}`);
 }
 
 export async function assignEventToStudentAction(formData: FormData) {

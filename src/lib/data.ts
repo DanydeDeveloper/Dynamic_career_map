@@ -27,7 +27,7 @@ export async function getDashboardData(user: CurrentUser) {
     include: {
       profile: true,
       eventMap: {
-        include: { event: true },
+        include: { event: { include: { source: true } } },
         orderBy: { event: { date: "asc" } }
       },
       proposals: {
@@ -55,7 +55,7 @@ export async function getStudentProfile(studentId: string, user: CurrentUser) {
       },
       strategy: true,
       eventMap: {
-        include: { event: true },
+        include: { event: { include: { source: true } } },
         orderBy: { event: { date: "asc" } }
       },
       feedback: {
@@ -83,6 +83,7 @@ export async function getStudentProfile(studentId: string, user: CurrentUser) {
 
 export async function getEvents() {
   return prisma.event.findMany({
+    include: { source: true },
     orderBy: { date: "asc" }
   });
 }
@@ -90,7 +91,14 @@ export async function getEvents() {
 export async function getApprovedEvents() {
   return prisma.event.findMany({
     where: { status: "approved" },
+    include: { source: true },
     orderBy: { date: "asc" }
+  });
+}
+
+export async function getEventSources() {
+  return prisma.eventSource.findMany({
+    orderBy: [{ isActive: "desc" }, { title: "asc" }]
   });
 }
 

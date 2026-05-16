@@ -1,16 +1,30 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, RadioTower } from "lucide-react";
 import { AssignEventForm } from "@/components/forms/AssignEventForm";
 import { EventMapTimeline } from "@/components/events/EventMapTimeline";
 import { EventTable } from "@/components/events/EventTable";
-import { getDashboardData, getEvents, getStudentsForForms } from "@/lib/data";
+import { eventModerationStatusLabels } from "@/lib/constants";
+import { getApprovedEvents, getDashboardData, getEvents, getStudentsForForms } from "@/lib/data";
 import { canManageEvents, requireUser } from "@/lib/authz";
 
 export const dynamic = "force-dynamic";
 
-export default async function EventsPage() {
+type EventsPageProps = {
+  searchParams?: Promise<{ status?: string }>;
+};
+
+const moderationTabs = [
+  ["all", "Все"],
+  ["approved", eventModerationStatusLabels.approved],
+  ["needs_review", eventModerationStatusLabels.needs_review],
+  ["draft", eventModerationStatusLabels.draft],
+  ["rejected", eventModerationStatusLabels.rejected]
+] as const;
+
+export default async function EventsPage({ searchParams }: EventsPageProps) {
   const user = await requireUser();
   const canManage = canManageEvents(user.role);
+  const currentStatus = (await searchParams)?.status ?? "all";
 
   if (!canManage) {
     const students = await getDashboardData(user);
@@ -46,7 +60,8 @@ export default async function EventsPage() {
     );
   }
 
-  const [events, students] = await Promise.all([getEvents(), getStudentsForForms(user)]);
+  const [events, approvedEvents, students] = await Promise.all([getEvents(), getApprovedEvents(), getStudentsForForms(user)]);
+  const visibleEvents = currentStatus === "all" ? events : events.filter((event) => event.status === currentStatus);
 
   return (
     <>
@@ -58,23 +73,37 @@ export default async function EventsPage() {
             Управленческий экран педагога: база событий, ручное добавление и назначение мероприятий ученикам.
           </p>
         </div>
-        <Link className="button primary" href="/events/new">
-          <Plus size={17} aria-hidden="true" />
-          Добавить событие
-        </Link>
+        <div className="toolbar">
+          <Link className="button" href="/events/sources">
+            <RadioTower size={17} aria-hidden="true" />
+            Источники
+          </Link>
+          <Link className="button primary" href="/events/new">
+            <Plus size={17} aria-hidden="true" />
+            Добавить событие
+          </Link>
+        </div>
       </header>
 
+      <nav className="tabs" aria-label="Статусы модерации мероприятий">
+        {moderationTabs.map(([status, label]) => (
+          <Link className={`tab-link ${currentStatus === status ? "active" : ""}`} href={status === "all" ? "/events" : `/events?status=${status}`} key={status}>
+            {label}
+          </Link>
+        ))}
+      </nav>
+
       <section className="section">
-        <h2 className="section-title">Календарь базы мероприятий</h2>
-        <EventMapTimeline rows={events.map((event) => ({ event }))} />
+        <h2 className="section-title">Календарь мероприятий</h2>
+        <EventMapTimeline rows={visibleEvents.map((event) => ({ event }))} />
       </section>
 
       <section className="section">
-        <h2 className="section-title">Таблица событий</h2>
-        <EventTable rows={events.map((event) => ({ event }))} />
+        <h2 className="section-title">Модерация событий</h2>
+        <EventTable rows={visibleEvents.map((event) => ({ event }))} showModerationActions />
       </section>
 
-      <AssignEventForm students={students} events={events} />
+      <AssignEventForm students={students} events={approvedEvents} />
     </>
   );
 }

@@ -16,6 +16,7 @@ async function main() {
   await prisma.parentRequest.deleteMany();
   await prisma.studentProfile.deleteMany();
   await prisma.event.deleteMany();
+  await prisma.eventSource.deleteMany();
   await prisma.student.deleteMany();
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
@@ -192,9 +193,36 @@ async function main() {
     }
   });
 
+  const sources = await prisma.eventSource.createManyAndReturn({
+    data: [
+      {
+        title: "Детский технопарк",
+        url: "https://example.com/technopark",
+        city: "Москва",
+        focusAreasJson: json(["engineering", "IT"]),
+        comment: "Проверять мастер-классы и проектные смены раз в неделю."
+      },
+      {
+        title: "Университетские лаборатории",
+        url: "https://example.com/university-labs",
+        city: "Санкт-Петербург",
+        focusAreasJson: json(["science", "medicine"]),
+        comment: "Хороший источник экскурсий и коротких исследовательских проб."
+      },
+      {
+        title: "Онлайн-платформа школьных хакатонов",
+        url: "https://example.com/hackathons",
+        city: "Онлайн",
+        focusAreasJson: json(["IT", "entrepreneurship"]),
+        comment: "Отбирать только события с понятным возрастом и безопасной командной модерацией."
+      }
+    ]
+  });
+
   const events = await prisma.event.createManyAndReturn({
     data: [
       {
+        sourceId: sources[0].id,
         title: "Инженерный мастер-класс: умный дом",
         date: new Date("2026-06-08T10:00:00.000Z"),
         time: "13:00",
@@ -210,9 +238,11 @@ async function main() {
         activityFormatsJson: json(["teamwork", "making", "project_work"]),
         goal: "Проверить интерес к инженерии через практическую сборку",
         sourceUrl: "https://example.com/smart-home",
+        qualityNotes: "Проверены возраст, стоимость и очная площадка.",
         status: "approved"
       },
       {
+        sourceId: sources[1].id,
         title: "Лаборатория биотехнологий для школьников",
         date: new Date("2026-07-14T10:00:00.000Z"),
         time: "12:00",
@@ -228,9 +258,11 @@ async function main() {
         activityFormatsJson: json(["research", "helping_people"]),
         goal: "Аккуратно проверить почти не изученную область медицины",
         sourceUrl: "https://example.com/biotech",
-        status: "draft"
+        qualityNotes: "Нужно уточнить длительность и сопровождающего взрослого.",
+        status: "needs_review"
       },
       {
+        sourceId: sources[2].id,
         title: "Онлайн-хакатон школьных цифровых проектов",
         date: new Date("2026-08-21T10:00:00.000Z"),
         time: "11:00",
@@ -246,7 +278,28 @@ async function main() {
         activityFormatsJson: json(["teamwork", "project_work", "competition"]),
         goal: "Проверить интерес к командному созданию продукта",
         sourceUrl: "https://example.com/hackathon",
+        qualityNotes: "Проверить дедлайн регистрации перед назначением.",
         status: "approved"
+      },
+      {
+        sourceId: sources[0].id,
+        title: "Демо-день робототехники",
+        date: new Date("2026-09-12T10:00:00.000Z"),
+        time: "15:00",
+        format: "offline",
+        participationFormat: "family",
+        eventType: "festival",
+        ageMin: 10,
+        ageMax: 14,
+        city: "Москва",
+        location: "Детский технопарк",
+        cost: 0,
+        professionalAreasJson: json(["engineering", "IT"]),
+        activityFormatsJson: json(["making", "public_speaking"]),
+        goal: "Расширить насмотренность без высокой нагрузки",
+        sourceUrl: "https://example.com/robotics-demo",
+        qualityNotes: "Черновик из источника: нужна проверка программы.",
+        status: "draft"
       }
     ]
   });

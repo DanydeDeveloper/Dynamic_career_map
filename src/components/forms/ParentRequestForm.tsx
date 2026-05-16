@@ -1,4 +1,5 @@
 import { saveParentRequestAction } from "@/app/actions";
+import { SubmitButton } from "@/components/forms/SubmitButton";
 import { professionalAreas } from "@/lib/constants";
 
 export function ParentRequestForm({ studentId }: { studentId: string }) {
@@ -48,9 +49,7 @@ export function ParentRequestForm({ studentId }: { studentId: string }) {
           <textarea id="comment" name="comment" placeholder="Нагрузка, здоровье, нежелательные направления..." />
         </div>
         <div className="field full">
-          <button className="button primary" type="submit">
-            Сохранить родительский запрос
-          </button>
+          <SubmitButton pendingText="Сохраняем запрос...">Сохранить родительский запрос</SubmitButton>
         </div>
       </form>
     </section>

@@ -1,4 +1,5 @@
 import { createStudentAction } from "@/app/actions";
+import { SubmitButton } from "@/components/forms/SubmitButton";
 import { russianCities } from "@/lib/constants";
 
 export function NewStudentForm() {
@@ -41,9 +42,7 @@ export function NewStudentForm() {
           <input id="curatorName" name="curatorName" placeholder="Имя педагога" />
         </div>
         <div className="field full">
-          <button className="button primary" type="submit">
-            Создать ученика и перейти к диагностике
-          </button>
+          <SubmitButton pendingText="Создаем ученика...">Создать ученика и перейти к диагностике</SubmitButton>
         </div>
       </form>
     </section>

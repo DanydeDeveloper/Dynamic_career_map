@@ -17,7 +17,8 @@ const cases: Array<{
   { path: "/diagnostics", allowed: ["ADMIN", "CURATOR"] },
   { path: "/students/new", allowed: ["ADMIN", "CURATOR"] },
   { path: "/students/student-id/diagnostics", allowed: ["ADMIN", "CURATOR"] },
-  { path: "/events/new", allowed: ["ADMIN", "CURATOR"] }
+  { path: "/events/new", allowed: ["ADMIN", "CURATOR"] },
+  { path: "/events/sources", allowed: ["ADMIN", "CURATOR"] }
 ];
 
 for (const item of cases) {

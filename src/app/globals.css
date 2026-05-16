@@ -251,6 +251,48 @@ textarea {
   color: #ffffff;
 }
 
+.button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.button-spinner {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.tab-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tab-link.active,
+.tab-link:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
 .grid {
   display: grid;
   gap: 16px;
@@ -686,6 +728,23 @@ textarea {
 
 .data-table tr:last-child td {
   border-bottom: 0;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 220px;
+}
+
+.table-actions form {
+  margin: 0;
+}
+
+.table-actions .button {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
 }
 
 .form-grid {

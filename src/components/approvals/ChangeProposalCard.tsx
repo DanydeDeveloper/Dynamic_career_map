@@ -1,5 +1,6 @@
 import { ClipboardCheck } from "lucide-react";
 import { updateProposalStatusAction } from "@/app/actions";
+import { SubmitButton } from "@/components/forms/SubmitButton";
 import { proposalStatusLabels, proposalTypeLabels } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 
@@ -59,30 +60,22 @@ export function ChangeProposalCard({ proposal, showActions = true }: ChangePropo
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="approved" />
-            <button className="button primary" type="submit">
-              Согласовать
-            </button>
+            <SubmitButton pendingText="Согласуем...">Согласовать</SubmitButton>
           </form>
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="edited" />
-            <button className="button" type="submit">
-              Редактировать и согласовать
-            </button>
+            <SubmitButton className="button" pendingText="Согласуем...">Редактировать и согласовать</SubmitButton>
           </form>
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="postponed" />
-            <button className="button" type="submit">
-              Отложить
-            </button>
+            <SubmitButton className="button" pendingText="Откладываем...">Отложить</SubmitButton>
           </form>
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="rejected" />
-            <button className="button" type="submit">
-              Отклонить
-            </button>
+            <SubmitButton className="button" pendingText="Отклоняем...">Отклонить</SubmitButton>
           </form>
         </div>
       ) : null}
