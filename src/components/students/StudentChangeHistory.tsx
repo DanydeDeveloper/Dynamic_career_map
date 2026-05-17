@@ -1,4 +1,4 @@
-import { Activity, GitCompareArrows, History, Route } from "lucide-react";
+import { Activity, ClipboardList, Database, GitCompareArrows, History, Route } from "lucide-react";
 import { areaLabel, eventStatusLabels, priorityLabels, proposalStatusLabels, proposalTypeLabels } from "@/lib/constants";
 import { formatDate, parseJson } from "@/lib/format";
 
@@ -54,6 +54,31 @@ type StudentChangeHistoryProps = {
       score: number;
       level: string;
       updatedAt: Date;
+    }>;
+    auditLogs: Array<{
+      id: string;
+      action: string;
+      targetType: string;
+      source: string;
+      summary: string;
+      beforeJson: string | null;
+      afterJson: string | null;
+      metadataJson: string;
+      createdAt: Date;
+      actor: { name: string | null; email: string; role: string } | null;
+      event: { title: string } | null;
+      proposal: { proposalType: string; description: string } | null;
+    }>;
+    snapshots: Array<{
+      id: string;
+      snapshotType: string;
+      stage: string;
+      source: string;
+      relatedType: string | null;
+      relatedId: string | null;
+      reason: string;
+      createdAt: Date;
+      actor: { name: string | null; email: string } | null;
     }>;
   };
 };
@@ -290,6 +315,44 @@ function trendClass(value: number) {
   return "neutral";
 }
 
+const sourceLabels: Record<string, string> = {
+  diagnostic: "Диагностика",
+  feedback: "Обратная связь",
+  claude: "Claude",
+  rule_based: "Правила",
+  curator: "Педагог",
+  teacher_approval: "Согласование",
+  moderation: "Модерация",
+  status_update: "Статус"
+};
+
+const targetLabels: Record<string, string> = {
+  profile: "Профиль",
+  strategy: "Стратегия",
+  event_map: "Карта",
+  visibility: "Насмотренность",
+  event: "Мероприятие",
+  proposal: "Предложение",
+  feedback: "Обратная связь"
+};
+
+const actionLabels: Record<string, string> = {
+  "diagnostic.applied": "Диагностика применена",
+  "feedback.submitted": "Обратная связь сохранена",
+  "proposal.applied": "Согласование применено",
+  "proposal.status_changed": "Статус предложения изменен",
+  "event_map.event_assigned": "Мероприятие назначено",
+  "event_map.assignment_updated": "Назначение обновлено",
+  "event_map.status_changed": "Статус карты изменен",
+  "event.moderation_status_changed": "Модерация изменена"
+};
+
+const stageLabels: Record<string, string> = {
+  before: "До",
+  after: "После",
+  current: "Версия"
+};
+
 export function StudentChangeHistory({ student }: StudentChangeHistoryProps) {
   const timeline = buildTimeline(student);
   const interestRows = buildInterestRows(student.diagnostics);
@@ -300,6 +363,83 @@ export function StudentChangeHistory({ student }: StudentChangeHistoryProps) {
 
   return (
     <div className="history-grid">
+      <div className="panel">
+        <div className="panel-header">
+          <div>
+            <h2 className="panel-title">Журнал изменений</h2>
+            <p className="panel-subtitle">Кто изменил, что изменил, источник действия и сохраненные значения до/после.</p>
+          </div>
+          <ClipboardList size={20} aria-hidden="true" />
+        </div>
+        <div className="panel-body">
+          {student.auditLogs.length > 0 ? (
+            <div className="audit-list">
+              {student.auditLogs.slice(0, 14).map((log) => {
+                const actor = log.actor?.name ?? log.actor?.email ?? "Система";
+                const hasBefore = Boolean(log.beforeJson && log.beforeJson !== "null");
+                const hasAfter = Boolean(log.afterJson && log.afterJson !== "null");
+
+                return (
+                  <article className="audit-row" key={log.id}>
+                    <div className="audit-row-top">
+                      <div>
+                        <span className="timeline-date">{formatDateTime(log.createdAt)}</span>
+                        <h3>{actionLabels[log.action] ?? log.action}</h3>
+                      </div>
+                      <span className="tag primary">{sourceLabels[log.source] ?? log.source}</span>
+                    </div>
+                    <p>{log.summary}</p>
+                    <div className="timeline-details">
+                      <span>{targetLabels[log.targetType] ?? log.targetType}</span>
+                      <span>{actor}</span>
+                      {log.event ? <span>{log.event.title}</span> : null}
+                      {log.proposal ? <span>{proposalTypeLabels[log.proposal.proposalType] ?? log.proposal.proposalType}</span> : null}
+                      {hasBefore ? <span>Было сохранено</span> : null}
+                      {hasAfter ? <span>Стало сохранено</span> : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="empty-state">Журнал начнет наполняться после новых диагностик, обратной связи, согласований и модерации.</div>
+          )}
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="panel-header">
+          <div>
+            <h2 className="panel-title">Снимки состояния</h2>
+            <p className="panel-subtitle">Версии профиля, стратегии, карты и насмотренности вокруг важных действий.</p>
+          </div>
+          <Database size={20} aria-hidden="true" />
+        </div>
+        <div className="panel-body">
+          {student.snapshots.length > 0 ? (
+            <div className="snapshot-list">
+              {student.snapshots.slice(0, 10).map((snapshot) => (
+                <article className="snapshot-row" key={snapshot.id}>
+                  <div>
+                    <span className="timeline-date">{formatDateTime(snapshot.createdAt)}</span>
+                    <h3>
+                      {stageLabels[snapshot.stage] ?? snapshot.stage}: {targetLabels[snapshot.snapshotType] ?? snapshot.snapshotType}
+                    </h3>
+                    <p>{snapshot.reason}</p>
+                  </div>
+                  <div className="timeline-details">
+                    <span>{sourceLabels[snapshot.source] ?? snapshot.source}</span>
+                    {snapshot.actor ? <span>{snapshot.actor.name ?? snapshot.actor.email}</span> : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">Снимки появятся после следующего действия, которое меняет траекторию ученика.</div>
+          )}
+        </div>
+      </div>
+
       <div className="panel">
         <div className="panel-header">
           <div>
@@ -395,8 +535,7 @@ export function StudentChangeHistory({ student }: StudentChangeHistoryProps) {
       <div className="history-note">
         <Route size={18} aria-hidden="true" />
         <span>
-          Лента строится из фактических записей приложения. Для полной аудиторской истории на следующем шаге можно
-          добавить отдельный журнал событий.
+          Журнал хранит события аудита и снимки состояния. Лента ниже остается обзорной витриной: она собирает диагностики, обратную связь, согласования и карту в один хронологический контекст.
         </span>
       </div>
     </div>

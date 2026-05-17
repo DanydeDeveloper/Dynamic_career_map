@@ -31,6 +31,8 @@ model User {
   parentStudents      Student[]           @relation("StudentParent")
   studentProfile      Student?            @relation("StudentUser")
   diagnosticsAuthored DiagnosticSession[]
+  auditLogsAuthored   AuditLog[]          @relation("AuditLogActor")
+  snapshotsAuthored   StudentSnapshot[]   @relation("StudentSnapshotActor")
 }
 
 model Account {
@@ -95,6 +97,8 @@ model Student {
   proposals      ChangeProposal[]
   strategy       CareerStrategy?
   diagnostics    DiagnosticSession[]
+  auditLogs      AuditLog[]
+  snapshots      StudentSnapshot[]
 }
 
 model StudentProfile {
@@ -187,6 +191,7 @@ model Event {
   studentMaps           StudentEventMap[]
   feedback              EventFeedback[]
   proposals             ChangeProposal[]
+  auditLogs             AuditLog[]
 }
 
 model EventSource {
@@ -265,6 +270,7 @@ model ChangeProposal {
   approvedAt     DateTime?
   student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   triggerEvent   Event?    @relation(fields: [triggerEventId], references: [id], onDelete: SetNull)
+  auditLogs      AuditLog[]
 }
 
 model CareerStrategy {
@@ -280,4 +286,58 @@ model CareerStrategy {
   next12MonthsFocus      String
   updatedAt              DateTime @updatedAt
   student                Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id           String          @id @default(cuid())
+  studentId    String?
+  eventId      String?
+  proposalId   String?
+  actorId      String?
+  action       String
+  targetType   String
+  targetId     String?
+  source       String
+  summary      String
+  beforeJson   String?
+  afterJson    String?
+  metadataJson String          @default("{}")
+  createdAt    DateTime        @default(now())
+  student      Student?        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  event        Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  proposal     ChangeProposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
+  actor        User?           @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([studentId, createdAt])
+  @@index([eventId, createdAt])
+  @@index([proposalId])
+  @@index([actorId])
+  @@index([action])
+  @@index([targetType])
+}
+
+model StudentSnapshot {
+  id             String   @id @default(cuid())
+  studentId      String
+  actorId        String?
+  snapshotType   String
+  stage          String
+  source         String
+  relatedType    String?
+  relatedId      String?
+  reason         String
+  profileJson    String?
+  interestsJson  String?
+  strategyJson   String?
+  eventMapJson   String?
+  visibilityJson String?
+  metadataJson   String   @default("{}")
+  createdAt      DateTime @default(now())
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  actor          User?    @relation("StudentSnapshotActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([studentId, createdAt])
+  @@index([studentId, snapshotType, createdAt])
+  @@index([relatedType, relatedId])
+  @@index([actorId])
 }

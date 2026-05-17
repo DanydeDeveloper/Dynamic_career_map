@@ -827,6 +827,42 @@ textarea {
   color: var(--primary);
 }
 
+.audit-list,
+.snapshot-list {
+  display: grid;
+  gap: 12px;
+}
+
+.audit-row,
+.snapshot-row {
+  display: grid;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.audit-row-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.audit-row h3,
+.snapshot-row h3 {
+  margin: 3px 0 0;
+  font-size: 15px;
+}
+
+.audit-row p,
+.snapshot-row p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .change-timeline {
   display: grid;
   gap: 0;
@@ -1138,6 +1174,7 @@ textarea {
   .student-card-top,
   .panel-header,
   .event-horizon-header,
+  .audit-row-top,
   .timeline-top,
   .interest-dynamics-row {
     display: grid;

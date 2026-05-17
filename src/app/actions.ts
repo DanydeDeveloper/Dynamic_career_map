@@ -6,6 +6,13 @@ import { prisma } from "@/lib/db";
 import { professionalAreas } from "@/lib/constants";
 import { canManageApprovals, canManageEvents, canManageStudents, requireUser } from "@/lib/authz";
 import { generateDiagnosticInsightsDraft, generateFeedbackProposals } from "@/lib/ai";
+import {
+  createAuditLog,
+  createStudentSnapshot,
+  getStudentAuditState,
+  pickStudentAuditTarget,
+  proposalDraftSource
+} from "@/lib/audit-log";
 import { parseJson } from "@/lib/format";
 import { applyApprovedProposal } from "@/lib/proposal-application";
 
@@ -148,8 +155,10 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
   const summaryText = text(formData, "summaryText") || insights.profileSummary;
   const curatorComment = text(formData, "curatorComment") || insights.curatorComment;
   const strategy = insights.strategy;
+  const draftSource = insights.source === "ai" ? "claude" : "rule_based";
+  const beforeState = await getStudentAuditState(studentId);
 
-  await prisma.diagnosticSession.create({
+  const diagnostic = await prisma.diagnosticSession.create({
     data: {
       studentId,
       authorId: user.id,
@@ -240,6 +249,56 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
       }
     });
   }
+
+  const afterState = await getStudentAuditState(studentId);
+
+  await createAuditLog({
+    studentId,
+    actorId: user.id,
+    action: "diagnostic.applied",
+    targetType: "profile",
+    targetId: studentId,
+    source: "diagnostic",
+    summary: "Диагностика применена к профилю и стратегии ученика.",
+    before: {
+      profile: beforeState?.profile,
+      strategy: beforeState?.strategy
+    },
+    after: {
+      profile: afterState?.profile,
+      strategy: afterState?.strategy
+    },
+    metadata: {
+      diagnosticId: diagnostic.id,
+      draftSource
+    }
+  });
+
+  await createStudentSnapshot({
+    studentId,
+    actorId: user.id,
+    snapshotType: "diagnostic",
+    stage: "before",
+    source: "diagnostic",
+    relatedType: "diagnostic",
+    relatedId: diagnostic.id,
+    reason: "До применения диагностики к профилю.",
+    state: beforeState,
+    metadata: { draftSource }
+  });
+
+  await createStudentSnapshot({
+    studentId,
+    actorId: user.id,
+    snapshotType: "diagnostic",
+    stage: "after",
+    source: "diagnostic",
+    relatedType: "diagnostic",
+    relatedId: diagnostic.id,
+    reason: "После применения диагностики к профилю.",
+    state: afterState,
+    metadata: { draftSource }
+  });
 
   revalidatePath("/");
   revalidatePath("/students");
@@ -362,12 +421,49 @@ export async function updateEventModerationStatusAction(formData: FormData) {
     throw new Error("Некорректный статус модерации.");
   }
 
-  await prisma.event.update({
+  const existingEvent = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      qualityNotes: true,
+      sourceId: true,
+      moderatedById: true,
+      moderatedAt: true
+    }
+  });
+
+  if (!existingEvent) {
+    throw new Error("Мероприятие не найдено.");
+  }
+
+  const event = await prisma.event.update({
     where: { id: eventId },
     data: {
       status,
       moderatedById: status === "approved" || status === "rejected" ? user.id : null,
       moderatedAt: status === "approved" || status === "rejected" ? new Date() : null
+    }
+  });
+
+  await createAuditLog({
+    eventId,
+    actorId: user.id,
+    action: "event.moderation_status_changed",
+    targetType: "event",
+    targetId: eventId,
+    source: "moderation",
+    summary: `Статус модерации мероприятия изменен: ${event.title}.`,
+    before: existingEvent,
+    after: {
+      id: event.id,
+      title: event.title,
+      status: event.status,
+      qualityNotes: event.qualityNotes,
+      sourceId: event.sourceId,
+      moderatedById: event.moderatedById,
+      moderatedAt: event.moderatedAt
     }
   });
 
@@ -388,7 +484,18 @@ export async function assignEventToStudentAction(formData: FormData) {
     throw new Error("Нужно выбрать ученика и мероприятие.");
   }
 
-  await prisma.studentEventMap.upsert({
+  const beforeState = await getStudentAuditState(studentId);
+  const existingMapItem = await prisma.studentEventMap.findUnique({
+    where: {
+      studentId_eventId: {
+        studentId,
+        eventId
+      }
+    },
+    include: { event: { select: { title: true } } }
+  });
+
+  const mapItem = await prisma.studentEventMap.upsert({
     where: {
       studentId_eventId: {
         studentId,
@@ -410,6 +517,59 @@ export async function assignEventToStudentAction(formData: FormData) {
     }
   });
 
+  const afterState = await getStudentAuditState(studentId);
+
+  await createAuditLog({
+    studentId,
+    eventId,
+    actorId: user.id,
+    action: existingMapItem ? "event_map.assignment_updated" : "event_map.event_assigned",
+    targetType: "event_map",
+    targetId: mapItem.id,
+    source: "curator",
+    summary: existingMapItem ? "Назначение мероприятия в карте обновлено." : "Мероприятие назначено ученику.",
+    before: existingMapItem
+      ? {
+          id: existingMapItem.id,
+          eventId: existingMapItem.eventId,
+          eventTitle: existingMapItem.event.title,
+          priority: existingMapItem.priority,
+          status: existingMapItem.status,
+          goalForStudent: existingMapItem.goalForStudent,
+          curatorComment: existingMapItem.curatorComment
+        }
+      : null,
+    after: pickStudentAuditTarget(afterState, "event_map"),
+    metadata: {
+      priority: mapItem.priority,
+      status: mapItem.status
+    }
+  });
+
+  await createStudentSnapshot({
+    studentId,
+    actorId: user.id,
+    snapshotType: "event_map",
+    stage: "before",
+    source: "curator",
+    relatedType: "event",
+    relatedId: eventId,
+    reason: "До назначения мероприятия в карту.",
+    state: beforeState
+  });
+
+  await createStudentSnapshot({
+    studentId,
+    actorId: user.id,
+    snapshotType: "event_map",
+    stage: "after",
+    source: "curator",
+    relatedType: "event",
+    relatedId: eventId,
+    reason: "После назначения мероприятия в карту.",
+    state: afterState
+  });
+
   revalidatePath("/");
   revalidatePath("/students");
   revalidatePath(`/students/${studentId}`);
@@ -428,7 +588,12 @@ export async function updateStudentEventStatusAction(formData: FormData) {
 
   const mapItem = await prisma.studentEventMap.findUnique({
     where: { id: studentEventMapId },
-    include: { student: true }
+    include: {
+      student: true,
+      event: {
+        select: { id: true, title: true }
+      }
+    }
   });
 
   if (!mapItem) {
@@ -445,9 +610,64 @@ export async function updateStudentEventStatusAction(formData: FormData) {
     throw new Error("Недостаточно прав для изменения статуса мероприятия.");
   }
 
-  await prisma.studentEventMap.update({
+  const beforeState = await getStudentAuditState(mapItem.studentId);
+  const updatedMapItem = await prisma.studentEventMap.update({
     where: { id: studentEventMapId },
     data: { status }
+  });
+  const afterState = await getStudentAuditState(mapItem.studentId);
+
+  await createAuditLog({
+    studentId: mapItem.studentId,
+    eventId: mapItem.eventId,
+    actorId: user.id,
+    action: "event_map.status_changed",
+    targetType: "event_map",
+    targetId: studentEventMapId,
+    source: user.role === "PARENT" || user.role === "STUDENT" ? "feedback" : "curator",
+    summary: `Статус мероприятия в карте изменен: ${mapItem.event.title}.`,
+    before: {
+      id: mapItem.id,
+      eventId: mapItem.eventId,
+      eventTitle: mapItem.event.title,
+      priority: mapItem.priority,
+      status: mapItem.status,
+      goalForStudent: mapItem.goalForStudent,
+      curatorComment: mapItem.curatorComment
+    },
+    after: {
+      id: updatedMapItem.id,
+      eventId: updatedMapItem.eventId,
+      eventTitle: mapItem.event.title,
+      priority: updatedMapItem.priority,
+      status: updatedMapItem.status,
+      goalForStudent: updatedMapItem.goalForStudent,
+      curatorComment: updatedMapItem.curatorComment
+    }
+  });
+
+  await createStudentSnapshot({
+    studentId: mapItem.studentId,
+    actorId: user.id,
+    snapshotType: "event_map",
+    stage: "before",
+    source: "status_update",
+    relatedType: "event",
+    relatedId: mapItem.eventId,
+    reason: "До изменения статуса мероприятия в карте.",
+    state: beforeState
+  });
+
+  await createStudentSnapshot({
+    studentId: mapItem.studentId,
+    actorId: user.id,
+    snapshotType: "event_map",
+    stage: "after",
+    source: "status_update",
+    relatedType: "event",
+    relatedId: mapItem.eventId,
+    reason: "После изменения статуса мероприятия в карте.",
+    state: afterState
   });
 
   revalidatePath("/");
@@ -493,8 +713,9 @@ export async function submitFeedbackAction(formData: FormData) {
   const learned = optionalText(formData, "learned");
   const wantTryNext = optionalText(formData, "wantTryNext");
   const tags = checkedValues(formData, "tags");
+  const beforeState = await getStudentAuditState(studentId);
 
-  await prisma.eventFeedback.create({
+  const feedback = await prisma.eventFeedback.create({
     data: {
       studentId,
       eventId,
@@ -548,6 +769,51 @@ export async function submitFeedbackAction(formData: FormData) {
     });
   }
 
+  const afterState = await getStudentAuditState(studentId);
+  const proposalSources = Array.from(new Set(proposals.map((proposal) => proposalDraftSource(proposal.reason))));
+
+  await createAuditLog({
+    studentId,
+    eventId,
+    actorId: user.id,
+    action: "feedback.submitted",
+    targetType: "feedback",
+    targetId: feedback.id,
+    source: "feedback",
+    summary: `Обратная связь оставлена по мероприятию: ${event.title}.`,
+    before: pickStudentAuditTarget(beforeState, "event_map"),
+    after: pickStudentAuditTarget(afterState, "event_map"),
+    metadata: {
+      feedback: {
+        interestScore,
+        difficultyScore,
+        engagementScore,
+        fatigueScore,
+        wantContinue,
+        tags
+      },
+      proposalsCreated: proposals.length,
+      proposalSources
+    }
+  });
+
+  await createStudentSnapshot({
+    studentId,
+    actorId: user.id,
+    snapshotType: "feedback",
+    stage: "after",
+    source: "feedback",
+    relatedType: "feedback",
+    relatedId: feedback.id,
+    reason: "После сохранения обратной связи и черновиков предложений.",
+    state: afterState,
+    metadata: {
+      eventId,
+      proposalsCreated: proposals.length,
+      proposalSources
+    }
+  });
+
   revalidatePath("/");
   revalidatePath("/approvals");
   revalidatePath(`/students/${studentId}`);
@@ -574,7 +840,7 @@ export async function updateProposalStatusAction(formData: FormData) {
   const shouldApply = shouldApplyStatus && existingProposal.status !== "approved" && existingProposal.status !== "edited";
 
   if (shouldApply) {
-    await applyApprovedProposal(proposalId);
+    await applyApprovedProposal(proposalId, user.id);
   }
 
   const proposal = await prisma.changeProposal.update({
@@ -583,6 +849,32 @@ export async function updateProposalStatusAction(formData: FormData) {
       status,
       approvedBy: shouldApplyStatus ? user.id : null,
       approvedAt: shouldApplyStatus ? new Date() : null
+    }
+  });
+
+  await createAuditLog({
+    studentId: proposal.studentId,
+    eventId: proposal.triggerEventId,
+    proposalId: proposal.id,
+    actorId: user.id,
+    action: "proposal.status_changed",
+    targetType: "proposal",
+    targetId: proposal.id,
+    source: "teacher_approval",
+    summary: `Статус предложения изменен: ${proposal.description}.`,
+    before: {
+      status: existingProposal.status,
+      approvedBy: existingProposal.approvedBy,
+      approvedAt: existingProposal.approvedAt
+    },
+    after: {
+      status: proposal.status,
+      approvedBy: proposal.approvedBy,
+      approvedAt: proposal.approvedAt
+    },
+    metadata: {
+      proposalType: proposal.proposalType,
+      applied: shouldApply
     }
   });
 

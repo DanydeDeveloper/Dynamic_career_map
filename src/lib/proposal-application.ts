@@ -1,4 +1,12 @@
 import { prisma } from "@/lib/db";
+import {
+  createAuditLog,
+  createStudentSnapshot,
+  getStudentAuditState,
+  pickStudentAuditTarget,
+  proposalDraftSource,
+  proposalTargetType
+} from "@/lib/audit-log";
 import { professionalAreas } from "@/lib/constants";
 import { parseJson } from "@/lib/format";
 import { visibilityLevel } from "@/lib/visibility";
@@ -257,12 +265,31 @@ async function removeEventFromMap(proposalId: string) {
   });
 }
 
-export async function applyApprovedProposal(proposalId: string) {
+export async function applyApprovedProposal(proposalId: string, actorId?: string | null) {
   const proposal = await prisma.changeProposal.findUnique({ where: { id: proposalId } });
 
   if (!proposal) {
     throw new Error("Предложение не найдено.");
   }
+
+  const targetType = proposalTargetType(proposal.proposalType);
+  const beforeState = await getStudentAuditState(proposal.studentId);
+
+  await createStudentSnapshot({
+    studentId: proposal.studentId,
+    actorId,
+    snapshotType: targetType,
+    stage: "before",
+    source: "teacher_approval",
+    relatedType: "proposal",
+    relatedId: proposal.id,
+    reason: `До применения согласования: ${proposal.description}`,
+    state: beforeState,
+    metadata: {
+      proposalType: proposal.proposalType,
+      draftSource: proposalDraftSource(proposal.reason)
+    }
+  });
 
   switch (proposal.proposalType) {
     case "update_visibility":
@@ -293,4 +320,42 @@ export async function applyApprovedProposal(proposalId: string) {
       await appendStrategyNote(proposal.id);
       break;
   }
+
+  const afterState = await getStudentAuditState(proposal.studentId);
+
+  await createAuditLog({
+    studentId: proposal.studentId,
+    eventId: proposal.triggerEventId,
+    proposalId: proposal.id,
+    actorId,
+    action: "proposal.applied",
+    targetType,
+    targetId: proposal.triggerEventId ?? proposal.studentId,
+    source: "teacher_approval",
+    summary: `Согласованное предложение применено: ${proposal.description}`,
+    before: pickStudentAuditTarget(beforeState, targetType),
+    after: pickStudentAuditTarget(afterState, targetType),
+    metadata: {
+      proposalType: proposal.proposalType,
+      draftSource: proposalDraftSource(proposal.reason),
+      oldValue: proposal.oldValue,
+      newValue: proposal.newValue
+    }
+  });
+
+  await createStudentSnapshot({
+    studentId: proposal.studentId,
+    actorId,
+    snapshotType: targetType,
+    stage: "after",
+    source: "teacher_approval",
+    relatedType: "proposal",
+    relatedId: proposal.id,
+    reason: `После применения согласования: ${proposal.description}`,
+    state: afterState,
+    metadata: {
+      proposalType: proposal.proposalType,
+      draftSource: proposalDraftSource(proposal.reason)
+    }
+  });
 }
