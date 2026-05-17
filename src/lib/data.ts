@@ -112,6 +112,18 @@ export async function getStudentProfile(studentId: string, user: CurrentUser) {
         },
         orderBy: { createdAt: "desc" },
         take: 18
+      },
+      aiInsights: {
+        include: {
+          actor: {
+            select: {
+              name: true,
+              email: true
+            }
+          }
+        },
+        orderBy: { createdAt: "desc" },
+        take: 12
       }
     }
   });

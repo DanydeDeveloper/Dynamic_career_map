@@ -120,6 +120,20 @@ const proposalsSchema = {
   }
 };
 
+const aiInsightSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["title", "summary", "evidence", "recommendations", "risks", "nextQuestions"],
+  properties: {
+    title: { type: "string" },
+    summary: { type: "string" },
+    evidence: { type: "array", items: { type: "string" } },
+    recommendations: { type: "array", items: { type: "string" } },
+    risks: { type: "array", items: { type: "string" } },
+    nextQuestions: { type: "array", items: { type: "string" } }
+  }
+};
+
 function anthropicModel() {
   return process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
 }
@@ -364,6 +378,139 @@ function normalizeProposals(value: unknown) {
   }
 
   return proposals.map(normalizeProposal).filter((proposal): proposal is RuleProposal => Boolean(proposal)).slice(0, 4);
+}
+
+export type GeneratedAiInsight = {
+  title: string;
+  summary: string;
+  evidence: string[];
+  recommendations: string[];
+  risks: string[];
+  nextQuestions: string[];
+  source: "ai" | "fallback";
+};
+
+export type FeedbackAnalysisInput = FeedbackSignal & {
+  currentProfile?: unknown;
+  currentStrategy?: unknown;
+  currentEventMap?: unknown;
+  currentVisibility?: unknown;
+  proposalsCreated?: number;
+};
+
+export type SnapshotComparisonInput = {
+  studentName: string;
+  reason: string;
+  before: unknown;
+  after: unknown;
+  context?: unknown;
+};
+
+function normalizeAiInsight(value: unknown, fallback: GeneratedAiInsight) {
+  if (!value || typeof value !== "object") {
+    return fallback;
+  }
+
+  const insight = value as Record<string, unknown>;
+
+  return {
+    title: normalizeText(insight.title, fallback.title, 140),
+    summary: normalizeText(insight.summary, fallback.summary, 1200),
+    evidence: normalizeStringList(insight.evidence, fallback.evidence, 6),
+    recommendations: normalizeStringList(insight.recommendations, fallback.recommendations, 6),
+    risks: normalizeStringList(insight.risks, fallback.risks, 5),
+    nextQuestions: normalizeStringList(insight.nextQuestions, fallback.nextQuestions, 5),
+    source: "ai" as const
+  };
+}
+
+function fallbackFeedbackAnalysis(input: FeedbackAnalysisInput): GeneratedAiInsight {
+  const eventTitle = input.eventTitle ?? "Мероприятие";
+  const difficultyScore = input.difficultyScore ?? 5;
+  const positiveSignals = [
+    input.interestScore >= 7 ? `Интерес высокий: ${input.interestScore}/10` : null,
+    input.engagementScore >= 7 ? `Вовлеченность высокая: ${input.engagementScore}/10` : null,
+    input.wantContinue === "yes" ? "Ученик хочет продолжать направление" : null,
+    input.liked ? `Понравилось: ${input.liked}` : null
+  ].filter(Boolean) as string[];
+  const cautionSignals = [
+    difficultyScore >= 8 ? `Сложность высокая: ${difficultyScore}/10` : null,
+    input.fatigueScore >= 8 ? `Усталость высокая: ${input.fatigueScore}/10` : null,
+    input.wantContinue === "no" ? "Ученик не хочет продолжать в текущем формате" : null,
+    input.disliked ? `Не понравилось: ${input.disliked}` : null
+  ].filter(Boolean) as string[];
+
+  return {
+    title: "Разбор обратной связи",
+    summary: `${eventTitle}: интерес ${input.interestScore}/10, вовлеченность ${input.engagementScore}/10, сложность ${difficultyScore}/10, усталость ${input.fatigueScore}/10. Сигнал стоит рассматривать как повод уточнить траекторию, а не как окончательный вывод.`,
+    evidence: [...positiveSignals, ...cautionSignals].slice(0, 6),
+    recommendations: [
+      input.wantContinue === "yes" ? "Сохранить направление в ближайших гипотезах и проверить его еще одним форматом." : "Проверить, проблема была в направлении или в формате мероприятия.",
+      input.fatigueScore >= 8 ? "Снизить плотность похожих событий и обсудить комфортную нагрузку." : "Собрать еще одну обратную связь после следующей профпробы.",
+      input.proposalsCreated ? `Проверить ${input.proposalsCreated} черновик(а) предложений перед согласованием.` : "Не менять профиль резко без дополнительного наблюдения."
+    ],
+    risks: cautionSignals.length > 0 ? cautionSignals : ["Недостаточно данных для сильного вывода по одному мероприятию."],
+    nextQuestions: [
+      "Что именно удерживало интерес во время мероприятия?",
+      "Какая часть была сложной: тема, темп, формат или коммуникация?",
+      "Хочется ли повторить похожий опыт в другом формате?"
+    ],
+    source: "fallback"
+  };
+}
+
+function fallbackSnapshotComparison(input: SnapshotComparisonInput): GeneratedAiInsight {
+  return {
+    title: "Динамика траектории",
+    summary: `${input.studentName}: состояние траектории обновлено. Сравнение снимков фиксирует, что изменения уже сохранены в журнале, но педагогический вывод требует проверки на следующих действиях.`,
+    evidence: [input.reason, "Есть снимок состояния до изменения.", "Есть снимок состояния после изменения."],
+    recommendations: [
+      "Смотреть не только на текущий профиль, но и на динамику после диагностик и обратной связи.",
+      "Проверить, подтверждается ли изменение следующим мероприятием или разговором.",
+      "Использовать вывод как черновик для обсуждения с педагогом."
+    ],
+    risks: ["Один шаг траектории не должен резко менять долгосрочную стратегию."],
+    nextQuestions: [
+      "Что именно изменилось в интересах, карте или стратегии?",
+      "Какая следующая профпроба лучше всего проверит новую гипотезу?",
+      "Нужно ли объяснить изменение родителю или ученику?"
+    ],
+    source: "fallback"
+  };
+}
+
+export async function generateFeedbackAnalysis(input: FeedbackAnalysisInput): Promise<GeneratedAiInsight> {
+  const fallback = fallbackFeedbackAnalysis(input);
+  const aiDraft = await callClaudeStructured<Record<string, unknown>>(
+    "career_feedback_analysis",
+    aiInsightSchema,
+    [
+      "Ты помогаешь педагогу Private.Education разобрать обратную связь ученика после профориентационного мероприятия.",
+      "Верни педагогический AI-черновик на русском языке: что сигналит опыт, какие есть доказательства, что делать дальше, где риски и какие вопросы задать.",
+      "Не применяй изменения сам, не делай окончательных выводов по одному событию, не ставь диагнозы.",
+      "Пиши конкретно и в рамках архитектуры: обратная связь может породить change proposal, но применяет его только педагог."
+    ].join(" "),
+    input
+  );
+
+  return normalizeAiInsight(aiDraft, fallback);
+}
+
+export async function generateSnapshotComparison(input: SnapshotComparisonInput): Promise<GeneratedAiInsight> {
+  const fallback = fallbackSnapshotComparison(input);
+  const aiDraft = await callClaudeStructured<Record<string, unknown>>(
+    "career_snapshot_comparison",
+    aiInsightSchema,
+    [
+      "Ты помогаешь педагогу Private.Education сравнить снимки состояния карьерной карты ученика до и после важного действия.",
+      "Сравни профиль, стратегию, карту мероприятий и насмотренность только как педагогический черновик.",
+      "Назови, что изменилось, на какие доказательства смотреть, что проверить дальше, какие риски есть.",
+      "Не предлагай применять изменения напрямую: все изменения идут через согласование педагога."
+    ].join(" "),
+    input
+  );
+
+  return normalizeAiInsight(aiDraft, fallback);
 }
 
 export async function generateFeedbackProposals(signal: FeedbackSignal) {

@@ -4,6 +4,7 @@ import { MessageSquarePlus } from "lucide-react";
 import { ChangeProposalCard } from "@/components/approvals/ChangeProposalCard";
 import { EventRecommendations } from "@/components/events/EventRecommendations";
 import { EventMapTimeline } from "@/components/events/EventMapTimeline";
+import { StudentAiInsights } from "@/components/students/StudentAiInsights";
 import { ProfileSummary } from "@/components/students/ProfileSummary";
 import { StudentChangeHistory } from "@/components/students/StudentChangeHistory";
 import { VisibilityBars } from "@/components/students/VisibilityBars";
@@ -70,6 +71,10 @@ export default async function StudentPage({ params }: StudentPageProps) {
 
       <section className="section">
         <StudentChangeHistory student={student} />
+      </section>
+
+      <section className="section">
+        <StudentAiInsights insights={student.aiInsights} />
       </section>
 
       <section className="section">

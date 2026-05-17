@@ -958,6 +958,80 @@ textarea {
   color: var(--primary);
 }
 
+.history-note.compact {
+  padding: 9px 10px;
+  font-size: 12px;
+}
+
+.ai-insight-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.ai-insight-card {
+  display: grid;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.ai-insight-top {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.ai-insight-top svg {
+  margin-top: 4px;
+  color: var(--accent-strong);
+}
+
+.ai-insight-card h3 {
+  margin: 5px 0 0;
+  font-size: 17px;
+}
+
+.ai-insight-card p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.ai-insight-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-insight-list {
+  display: grid;
+  gap: 6px;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.ai-insight-list strong {
+  font-size: 13px;
+}
+
+.ai-insight-list ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ai-insight-list li + li {
+  margin-top: 5px;
+}
+
 .audit-list,
 .snapshot-list {
   display: grid;
@@ -1326,6 +1400,7 @@ textarea {
   .score-grid.compact,
   .action-grid,
   .recommendation-columns,
+  .ai-insight-columns,
   .profile-choice-grid,
   .login-select-row {
     grid-template-columns: 1fr;

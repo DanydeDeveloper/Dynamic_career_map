@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { professionalAreas } from "@/lib/constants";
 import { canManageApprovals, canManageEvents, canManageStudents, requireUser } from "@/lib/authz";
-import { generateDiagnosticInsightsDraft, generateFeedbackProposals } from "@/lib/ai";
+import {
+  generateDiagnosticInsightsDraft,
+  generateFeedbackAnalysis,
+  generateFeedbackProposals,
+  generateSnapshotComparison
+} from "@/lib/ai";
 import {
   createAuditLog,
   createStudentSnapshot,
@@ -79,6 +84,61 @@ function firstDateTime(date: string) {
   }
 
   return new Date(`${date}T00:00:00.000Z`);
+}
+
+async function createStudentAiInsight(input: {
+  studentId: string;
+  actorId?: string | null;
+  insightType: string;
+  source: string;
+  title: string;
+  summary: string;
+  evidence?: string[];
+  recommendations?: string[];
+  risks?: string[];
+  nextQuestions?: string[];
+  relatedType?: string | null;
+  relatedId?: string | null;
+  metadata?: unknown;
+}) {
+  const insight = await prisma.studentAiInsight.create({
+    data: {
+      studentId: input.studentId,
+      actorId: input.actorId ?? null,
+      insightType: input.insightType,
+      source: input.source,
+      title: input.title,
+      summary: input.summary,
+      evidenceJson: json(input.evidence ?? []),
+      recommendationsJson: json(input.recommendations ?? []),
+      risksJson: json(input.risks ?? []),
+      nextQuestionsJson: json(input.nextQuestions ?? []),
+      relatedType: input.relatedType ?? null,
+      relatedId: input.relatedId ?? null,
+      metadataJson: json(input.metadata ?? {})
+    }
+  });
+
+  await createAuditLog({
+    studentId: input.studentId,
+    actorId: input.actorId,
+    action: "ai_insight.generated",
+    targetType: "ai_insight",
+    targetId: insight.id,
+    source: input.source,
+    summary: `AI-черновик создан: ${input.title}.`,
+    after: {
+      insightType: input.insightType,
+      title: input.title,
+      summary: input.summary
+    },
+    metadata: {
+      relatedType: input.relatedType,
+      relatedId: input.relatedId
+    }
+  });
+
+  return insight;
 }
 
 export async function createStudentAction(formData: FormData) {
@@ -298,6 +358,72 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
     reason: "После применения диагностики к профилю.",
     state: afterState,
     metadata: { draftSource }
+  });
+
+  const topInterestEvidence = Object.entries(interests)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([area, score]) => `${area}: ${score}/10`);
+
+  await createStudentAiInsight({
+    studentId,
+    actorId: user.id,
+    insightType: "diagnostic_interpretation",
+    source: draftSource,
+    title: "Интерпретация диагностики",
+    summary: insights.profileSummary,
+    evidence: [
+      ...topInterestEvidence,
+      likedActivities ? `Нравится: ${likedActivities}` : "Любимые занятия не указаны",
+      subjects ? `Предметы: ${subjects}` : "Интересные предметы не указаны"
+    ],
+    recommendations: [
+      strategy.next3MonthsFocus,
+      ...strategy.mainHypotheses.slice(0, 3),
+      ...strategy.recommendedFormats.slice(0, 2).map((format) => `Проверить формат: ${format}`)
+    ],
+    risks: strategy.risks,
+    nextQuestions: [
+      "Какая гипотеза должна быть проверена ближайшим мероприятием?",
+      "Какие форматы активности дают больше энергии, а какие утомляют?",
+      "Что стоит обсудить с родителем перед назначением следующей профпробы?"
+    ],
+    relatedType: "diagnostic",
+    relatedId: diagnostic.id,
+    metadata: {
+      generatedDraftSource: insights.source
+    }
+  });
+
+  const comparison = await generateSnapshotComparison({
+    studentName: student.name,
+    reason: "Диагностика обновила профиль и стратегию ученика.",
+    before: beforeState,
+    after: afterState,
+    context: {
+      diagnosticId: diagnostic.id,
+      interests,
+      activityFormats,
+      strategy
+    }
+  });
+
+  await createStudentAiInsight({
+    studentId,
+    actorId: user.id,
+    insightType: "snapshot_comparison",
+    source: comparison.source === "ai" ? "claude" : "rule_based",
+    title: comparison.title,
+    summary: comparison.summary,
+    evidence: comparison.evidence,
+    recommendations: comparison.recommendations,
+    risks: comparison.risks,
+    nextQuestions: comparison.nextQuestions,
+    relatedType: "diagnostic",
+    relatedId: diagnostic.id,
+    metadata: {
+      comparisonReason: "diagnostic_applied"
+    }
   });
 
   revalidatePath("/");
@@ -811,6 +937,79 @@ export async function submitFeedbackAction(formData: FormData) {
       eventId,
       proposalsCreated: proposals.length,
       proposalSources
+    }
+  });
+
+  const feedbackAnalysis = await generateFeedbackAnalysis({
+    studentName: student.name,
+    eventTitle: event.title,
+    interestScore,
+    difficultyScore,
+    engagementScore,
+    fatigueScore,
+    wantContinue,
+    eventAreas,
+    eventFormats,
+    liked,
+    disliked,
+    learned,
+    wantTryNext,
+    tags,
+    currentProfile: afterState?.profile,
+    currentStrategy: afterState?.strategy,
+    currentEventMap: afterState?.eventMap,
+    currentVisibility: afterState?.visibility,
+    proposalsCreated: proposals.length
+  });
+
+  await createStudentAiInsight({
+    studentId,
+    actorId: user.id,
+    insightType: "feedback_analysis",
+    source: feedbackAnalysis.source === "ai" ? "claude" : "rule_based",
+    title: feedbackAnalysis.title,
+    summary: feedbackAnalysis.summary,
+    evidence: feedbackAnalysis.evidence,
+    recommendations: feedbackAnalysis.recommendations,
+    risks: feedbackAnalysis.risks,
+    nextQuestions: feedbackAnalysis.nextQuestions,
+    relatedType: "feedback",
+    relatedId: feedback.id,
+    metadata: {
+      eventId,
+      proposalsCreated: proposals.length,
+      proposalSources
+    }
+  });
+
+  const feedbackComparison = await generateSnapshotComparison({
+    studentName: student.name,
+    reason: `Обратная связь по мероприятию "${event.title}" обновила карту и создала черновики предложений.`,
+    before: beforeState,
+    after: afterState,
+    context: {
+      feedbackId: feedback.id,
+      eventTitle: event.title,
+      proposalsCreated: proposals.length
+    }
+  });
+
+  await createStudentAiInsight({
+    studentId,
+    actorId: user.id,
+    insightType: "snapshot_comparison",
+    source: feedbackComparison.source === "ai" ? "claude" : "rule_based",
+    title: feedbackComparison.title,
+    summary: feedbackComparison.summary,
+    evidence: feedbackComparison.evidence,
+    recommendations: feedbackComparison.recommendations,
+    risks: feedbackComparison.risks,
+    nextQuestions: feedbackComparison.nextQuestions,
+    relatedType: "feedback",
+    relatedId: feedback.id,
+    metadata: {
+      eventId,
+      comparisonReason: "feedback_submitted"
     }
   });
 
