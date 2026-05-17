@@ -1,8 +1,8 @@
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { GraduationCap, ShieldCheck, UserRound, UsersRound } from "lucide-react";
-import { signIn, auth } from "@/auth";
-import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
+import { signIn } from "@/auth";
+import { SubmitButton } from "@/components/forms/SubmitButton";
 
 type LoginPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -43,13 +43,12 @@ async function loginAction(formData: FormData) {
   "use server";
 
   const email = String(formData.get("loginEmail") ?? formData.get("selectedEmail") ?? "").trim();
-  const password = String(formData.get("password") ?? "password123");
 
   try {
     await signIn("credentials", {
       email,
-      password,
-      redirectTo: "/"
+      password: "password123",
+      redirectTo: "/dashboard"
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -60,12 +59,7 @@ async function loginAction(formData: FormData) {
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const session = await auth();
   const params = await searchParams;
-
-  if (session?.user) {
-    redirect("/");
-  }
 
   return (
     <section className="login-shell">
@@ -73,28 +67,22 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <p className="eyebrow">Dynamic Career Map</p>
         <h1 className="page-title">Выберите профиль</h1>
         <p className="page-description">
-          Откройте приложение как администратор, педагог, родитель или ученик. Демо-логин выбирается здесь, без ручного
-          ввода email и пароля.
+          Откройте приложение как администратор, педагог, родитель или ученик. Демо-логин выбирается здесь, без
+          ручного ввода email и пароля.
         </p>
 
-        {params.error ? <p className="form-error">Не удалось войти. Выберите профиль еще раз.</p> : null}
+        {params.error ? (
+          <p className="form-error">Не удалось войти. Выберите профиль еще раз.</p>
+        ) : null}
 
-        <form action={loginAction} className="profile-login-form">
-          <input name="password" type="hidden" value="password123" />
-          <FormPendingNotice title="Входим в кабинет" description="Подключаем выбранный профиль и открываем рабочее пространство." />
+        <div className="profile-choice-grid">
+          {demoProfiles.map((profile) => {
+            const Icon = profile.icon;
 
-          <div className="profile-choice-grid">
-            {demoProfiles.map((profile) => {
-              const Icon = profile.icon;
-
-              return (
-                <SubmitButton
-                  className="profile-choice"
-                  key={profile.email}
-                  name="loginEmail"
-                  pendingText="Входим..."
-                  value={profile.email}
-                >
+            return (
+              <form action={loginAction} className="profile-choice-form" key={profile.email}>
+                <input name="loginEmail" type="hidden" value={profile.email} />
+                <SubmitButton className="profile-choice" pendingText={`Входим как ${profile.role.toLowerCase()}...`}>
                   <Icon size={20} aria-hidden="true" />
                   <span>
                     <strong>{profile.title}</strong>
@@ -102,10 +90,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                     <em>{profile.email}</em>
                   </span>
                 </SubmitButton>
-              );
-            })}
-          </div>
+              </form>
+            );
+          })}
+        </div>
 
+        <form action={loginAction} className="profile-login-form">
           <div className="field full">
             <label htmlFor="selectedEmail">Войти через список логинов</label>
             <div className="login-select-row">

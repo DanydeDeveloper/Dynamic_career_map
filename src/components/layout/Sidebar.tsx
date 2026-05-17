@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 import {
   CalendarDays,
   ClipboardCheck,
@@ -20,12 +21,12 @@ type SidebarProps = {
 type NavItem = {
   href: string;
   label: string | Partial<Record<AppRole, string>>;
-  icon: typeof LayoutDashboard;
+  icon: LucideIcon;
   roles: AppRole[];
 };
 
 const navItems: NavItem[] = [
-  { href: "/", label: "Кабинет", icon: LayoutDashboard, roles: allRoles },
+  { href: "/dashboard", label: "Кабинет", icon: LayoutDashboard, roles: allRoles },
   {
     href: "/students",
     label: {
@@ -55,7 +56,8 @@ const navItems: NavItem[] = [
 
 const roleNotes: Record<AppRole, string> = {
   ADMIN: "Полный контур продукта: ученики, мероприятия, предложения изменений и контроль рабочих процессов.",
-  CURATOR: "Педагог ведет диагностику, карту мероприятий, обратную связь и согласует изменения перед обновлением профиля.",
+  CURATOR:
+    "Педагог ведет диагностику, карту мероприятий, обратную связь и согласует изменения перед обновлением профиля.",
   PARENT: "Родитель видит профиль ребенка, назначенные мероприятия и может оставить обратную связь после участия.",
   STUDENT: "Ученик видит свою карту, ближайшие пробы и может заполнить впечатления после мероприятия."
 };
@@ -88,7 +90,7 @@ export function Sidebar({ role }: SidebarProps) {
       <nav className="nav-list" aria-label="Главная навигация">
         {visibleItems.map((item) => {
           const Icon = item.icon;
-          const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link key={item.href} className={`nav-link ${isActive ? "active" : ""}`} href={item.href}>

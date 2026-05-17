@@ -5,9 +5,11 @@ import { isAppRole } from "@/lib/roles";
 
 export default auth((request) => {
   const { pathname } = request.nextUrl;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
 
   if (pathname.startsWith("/login")) {
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   const role = request.auth?.user?.role ?? "";
@@ -17,10 +19,10 @@ export default auth((request) => {
   }
 
   if (!canAccessPath(role, pathname)) {
-    return NextResponse.redirect(new URL("/", request.nextUrl));
+    return NextResponse.redirect(new URL("/dashboard", request.nextUrl));
   }
 
-  return NextResponse.next();
+  return NextResponse.next({ request: { headers: requestHeaders } });
 });
 
 export const config = {

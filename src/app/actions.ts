@@ -165,7 +165,7 @@ export async function createStudentAction(formData: FormData) {
     }
   });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/students");
   redirect(`/students/${student.id}/diagnostics`);
 }
@@ -426,7 +426,7 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
     }
   });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/students");
   revalidatePath(`/students/${studentId}`);
   redirect(`/students/${studentId}`);
@@ -696,7 +696,7 @@ export async function assignEventToStudentAction(formData: FormData) {
     state: afterState
   });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/students");
   revalidatePath(`/students/${studentId}`);
   redirect(`/students/${studentId}`);
@@ -796,7 +796,7 @@ export async function updateStudentEventStatusAction(formData: FormData) {
     state: afterState
   });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/events");
   revalidatePath(`/students/${mapItem.studentId}`);
   revalidatePath("/feedback");
@@ -1013,7 +1013,7 @@ export async function submitFeedbackAction(formData: FormData) {
     }
   });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/approvals");
   revalidatePath(`/students/${studentId}`);
   redirect(canManageApprovals(user.role) ? "/approvals" : `/students/${studentId}`);
@@ -1078,6 +1078,6 @@ export async function updateProposalStatusAction(formData: FormData) {
   });
 
   revalidatePath("/approvals");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath(`/students/${proposal.studentId}`);
 }
