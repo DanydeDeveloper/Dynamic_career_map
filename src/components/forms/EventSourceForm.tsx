@@ -1,6 +1,6 @@
 import { createEventSourceAction } from "@/app/actions";
 import { professionalAreas, russianCities } from "@/lib/constants";
-import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 
 export function EventSourceForm() {
   return (
@@ -49,6 +49,10 @@ export function EventSourceForm() {
           <textarea id="comment" name="comment" placeholder="Что и как часто стоит отсматривать у этого источника?" />
         </div>
         <div className="field full">
+          <FormPendingNotice
+            title="Источник сохраняется"
+            description="Добавляем источник в базу и обновляем список источников мероприятий."
+          />
           <SubmitButton pendingText="Добавляем источник...">Добавить источник</SubmitButton>
         </div>
       </form>

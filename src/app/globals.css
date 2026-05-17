@@ -260,6 +260,39 @@ textarea {
   animation: spin 900ms linear infinite;
 }
 
+.form-pending-notice {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  line-height: 1.4;
+}
+
+.form-pending-notice strong,
+.form-pending-notice span {
+  display: block;
+}
+
+.form-pending-notice strong {
+  font-size: 14px;
+}
+
+.form-pending-notice span {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.form-pending-notice svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -625,7 +658,24 @@ textarea {
 }
 
 .event-status-controls form {
+  display: grid;
+  gap: 6px;
   margin: 0;
+}
+
+.event-status-controls .form-pending-notice,
+.table-actions .form-pending-notice,
+.proposal-actions .form-pending-notice,
+.recommendation-actions .form-pending-notice {
+  max-width: 320px;
+  padding: 9px 10px;
+}
+
+.event-status-controls .form-pending-notice span,
+.table-actions .form-pending-notice span,
+.proposal-actions .form-pending-notice span,
+.recommendation-actions .form-pending-notice span {
+  font-size: 12px;
 }
 
 .status-step {
@@ -693,7 +743,9 @@ textarea {
 }
 
 .recommendation-actions {
-  display: flex;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
   justify-content: flex-start;
 }
 
@@ -738,6 +790,8 @@ textarea {
 }
 
 .table-actions form {
+  display: grid;
+  gap: 6px;
   margin: 0;
 }
 
@@ -1059,6 +1113,8 @@ textarea {
 }
 
 .proposal-actions form {
+  display: grid;
+  gap: 6px;
   margin: 0;
 }
 

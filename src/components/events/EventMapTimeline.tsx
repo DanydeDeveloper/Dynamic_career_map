@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, Check, ClipboardCheck, Footprints } from "lucide-react";
 import { updateStudentEventStatusAction } from "@/app/actions";
-import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { areaLabel, eventStatusLabels, eventTypeLabels, formatLabels, priorityLabels } from "@/lib/constants";
 import { formatDate, parseJson } from "@/lib/format";
 
@@ -255,6 +255,7 @@ export function EventMapTimeline({
                                   <form action={updateStudentEventStatusAction} key={step.value}>
                                     <input name="studentEventMapId" type="hidden" value={row.id} />
                                     <input name="status" type="hidden" value={step.value} />
+                                    <FormPendingNotice title="Статус обновляется" description="Сохраняем отметку в карте мероприятий." />
                                     <SubmitButton
                                       className={`status-step ${isActive ? "active" : ""}`}
                                       disabled={isActive}

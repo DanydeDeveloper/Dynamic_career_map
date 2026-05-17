@@ -1,5 +1,5 @@
 import { saveStudentDiagnosticAction } from "@/app/actions";
-import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { professionalAreas } from "@/lib/constants";
 
 export function StudentDiagnosticForm({ studentId }: { studentId: string }) {
@@ -92,6 +92,10 @@ export function StudentDiagnosticForm({ studentId }: { studentId: string }) {
           <textarea id="curatorComment" name="curatorComment" />
         </div>
         <div className="field full">
+          <FormPendingNotice
+            title="Диагностика обрабатывается"
+            description="Генерируем черновик через Claude или fallback, сохраняем диагностику, профиль, стратегию, журнал и снимки."
+          />
           <SubmitButton pendingText="Генерируем и сохраняем...">Сохранить диагностику и обновить профиль</SubmitButton>
         </div>
       </form>

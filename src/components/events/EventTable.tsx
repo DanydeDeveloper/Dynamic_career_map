@@ -1,6 +1,6 @@
 import { areaLabel, eventStatusLabels, eventTypeLabels, formatLabels, priorityLabels } from "@/lib/constants";
 import { updateEventModerationStatusAction } from "@/app/actions";
-import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { formatDate, formatMoney, parseJson } from "@/lib/format";
 
 type EventTableProps = {
@@ -109,6 +109,7 @@ export function EventTable({ rows, showModerationActions = false }: EventTablePr
                         <form action={updateEventModerationStatusAction} key={status}>
                           <input name="eventId" type="hidden" value={row.event.id} />
                           <input name="status" type="hidden" value={status} />
+                          <FormPendingNotice title="Модерация обновляется" description="Сохраняем новый статус мероприятия." />
                           <SubmitButton
                             className={`button ${status === "approved" ? "primary" : ""}`}
                             pendingText="Обновляем..."

@@ -1,5 +1,5 @@
 import { submitFeedbackAction } from "@/app/actions";
-import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 
 type EventFeedbackFormProps = {
   students: Array<{ id: string; name: string; grade: string }>;
@@ -108,6 +108,10 @@ export function EventFeedbackForm({ students, events }: EventFeedbackFormProps) 
         </div>
 
         <div className="field full">
+          <FormPendingNotice
+            title="Обратная связь обрабатывается"
+            description="Сохраняем ответы, обновляем статус мероприятия и создаем черновики предложений изменений."
+          />
           <SubmitButton pendingText="Создаем предложения...">Создать предложение изменений</SubmitButton>
         </div>
       </form>

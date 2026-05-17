@@ -1,6 +1,6 @@
 import { ClipboardCheck } from "lucide-react";
 import { updateProposalStatusAction } from "@/app/actions";
-import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { proposalStatusLabels, proposalTypeLabels } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 
@@ -60,21 +60,31 @@ export function ChangeProposalCard({ proposal, showActions = true }: ChangePropo
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="approved" />
+            <FormPendingNotice
+              title="Согласование применяется"
+              description="Применяем изменения к профилю, карте или стратегии и пишем журнал."
+            />
             <SubmitButton pendingText="Согласуем...">Согласовать</SubmitButton>
           </form>
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="edited" />
+            <FormPendingNotice
+              title="Согласование применяется"
+              description="Применяем изменения к профилю, карте или стратегии и пишем журнал."
+            />
             <SubmitButton className="button" pendingText="Согласуем...">Редактировать и согласовать</SubmitButton>
           </form>
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="postponed" />
+            <FormPendingNotice title="Решение сохраняется" description="Обновляем статус предложения." />
             <SubmitButton className="button" pendingText="Откладываем...">Отложить</SubmitButton>
           </form>
           <form action={updateProposalStatusAction}>
             <input name="proposalId" type="hidden" value={proposal.id} />
             <input name="status" type="hidden" value="rejected" />
+            <FormPendingNotice title="Решение сохраняется" description="Обновляем статус предложения." />
             <SubmitButton className="button" pendingText="Отклоняем...">Отклонить</SubmitButton>
           </form>
         </div>

@@ -32,3 +32,29 @@ export function SubmitButton({
     </button>
   );
 }
+
+type FormPendingNoticeProps = {
+  title?: string;
+  description?: string;
+};
+
+export function FormPendingNotice({
+  title = "Запрос обрабатывается",
+  description = "Не закрывайте страницу: сохраняем изменения и обновляем данные."
+}: FormPendingNoticeProps) {
+  const { pending } = useFormStatus();
+
+  if (!pending) {
+    return null;
+  }
+
+  return (
+    <div className="form-pending-notice" role="status" aria-live="assertive">
+      <LoaderCircle className="button-spinner" size={18} aria-hidden="true" />
+      <div>
+        <strong>{title}</strong>
+        <span>{description}</span>
+      </div>
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { signIn, auth } from "@/auth";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 
 type LoginPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -52,9 +53,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <input id="password" name="password" required type="password" defaultValue="password123" />
           </div>
           <div className="field full">
-            <button className="button primary" type="submit">
+            <FormPendingNotice title="Входим в кабинет" description="Проверяем учетные данные и открываем рабочее пространство." />
+            <SubmitButton pendingText="Входим...">
               Войти
-            </button>
+            </SubmitButton>
           </div>
         </form>
       </div>

@@ -1,5 +1,5 @@
 import { saveParentRequestAction } from "@/app/actions";
-import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { professionalAreas } from "@/lib/constants";
 
 export function ParentRequestForm({ studentId }: { studentId: string }) {
@@ -49,6 +49,10 @@ export function ParentRequestForm({ studentId }: { studentId: string }) {
           <textarea id="comment" name="comment" placeholder="Нагрузка, здоровье, нежелательные направления..." />
         </div>
         <div className="field full">
+          <FormPendingNotice
+            title="Родительский запрос сохраняется"
+            description="Обновляем предпочтения, ограничения и данные для будущего подбора мероприятий."
+          />
           <SubmitButton pendingText="Сохраняем запрос...">Сохранить родительский запрос</SubmitButton>
         </div>
       </form>

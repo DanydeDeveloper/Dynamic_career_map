@@ -1,5 +1,5 @@
 import { assignEventToStudentAction } from "@/app/actions";
-import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { priorityLabels } from "@/lib/constants";
 
 type AssignEventFormProps = {
@@ -53,6 +53,10 @@ export function AssignEventForm({ students, events }: AssignEventFormProps) {
           <textarea id="curatorComment" name="curatorComment" />
         </div>
         <div className="field full">
+          <FormPendingNotice
+            title="Назначаем мероприятие"
+            description="Добавляем событие в карту ученика и записываем изменение в журнал."
+          />
           <SubmitButton pendingText="Добавляем в карту...">Добавить в карту ученика</SubmitButton>
         </div>
       </form>

@@ -1,5 +1,5 @@
 import { createEventAction } from "@/app/actions";
-import { SubmitButton } from "@/components/forms/SubmitButton";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { eventStatusLabels, eventTypeLabels, professionalAreas, russianCities } from "@/lib/constants";
 import { getEventSources } from "@/lib/data";
 import { canManageEvents, requireUser } from "@/lib/authz";
@@ -155,6 +155,10 @@ export default async function NewEventPage() {
             <textarea id="goal" name="goal" placeholder="Какую гипотезу проверяет мероприятие?" />
           </div>
           <div className="field full">
+            <FormPendingNotice
+              title="Мероприятие сохраняется"
+              description="Создаем событие, привязываем источник и фиксируем статус модерации."
+            />
             <SubmitButton pendingText="Сохраняем событие...">Сохранить событие</SubmitButton>
           </div>
         </form>

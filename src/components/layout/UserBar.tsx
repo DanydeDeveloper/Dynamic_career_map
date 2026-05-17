@@ -1,4 +1,5 @@
 import { signOut } from "@/auth";
+import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { roleLabel } from "@/lib/roles";
 
 type UserBarProps = {
@@ -22,9 +23,10 @@ export function UserBar({ user }: UserBarProps) {
           await signOut({ redirectTo: "/login" });
         }}
       >
-        <button className="button" type="submit">
+        <FormPendingNotice title="Выходим" description="Завершаем сессию и возвращаемся на страницу входа." />
+        <SubmitButton className="button" pendingText="Выходим...">
           Выйти
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );
