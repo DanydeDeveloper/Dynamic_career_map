@@ -171,7 +171,7 @@ textarea {
 }
 
 .login-shell {
-  width: min(520px, 100%);
+  width: min(920px, 100%);
 }
 
 .login-panel {
@@ -180,6 +180,83 @@ textarea {
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.profile-login-form {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profile-choice {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 10px;
+  min-height: 132px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.profile-choice:hover,
+.profile-choice:focus-visible {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  outline: none;
+}
+
+.profile-choice:disabled {
+  cursor: wait;
+  opacity: 0.78;
+}
+
+.profile-choice svg {
+  margin-top: 3px;
+  color: var(--primary);
+}
+
+.profile-choice span,
+.profile-choice strong,
+.profile-choice small,
+.profile-choice em {
+  display: block;
+}
+
+.profile-choice strong {
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.profile-choice small {
+  color: var(--muted);
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1.35;
+}
+
+.profile-choice em {
+  margin-top: 9px;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.login-select-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
 }
 
 .login-form {
@@ -1248,7 +1325,9 @@ textarea {
   .score-grid,
   .score-grid.compact,
   .action-grid,
-  .recommendation-columns {
+  .recommendation-columns,
+  .profile-choice-grid,
+  .login-select-row {
     grid-template-columns: 1fr;
   }
 
