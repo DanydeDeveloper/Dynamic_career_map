@@ -39,6 +39,13 @@ export type GeneratedDiagnosticInsights = {
   source: "ai" | "fallback";
 };
 
+export type GeneratedEventAssignmentDraft = {
+  priority: "required" | "recommended" | "optional";
+  goalForStudent: string;
+  curatorComment: string;
+  source: "ai" | "fallback";
+};
+
 type AnthropicMessageResponse = {
   content?: Array<
     | {
@@ -131,6 +138,17 @@ const aiInsightSchema = {
     recommendations: { type: "array", items: { type: "string" } },
     risks: { type: "array", items: { type: "string" } },
     nextQuestions: { type: "array", items: { type: "string" } }
+  }
+};
+
+const eventAssignmentSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["priority", "goalForStudent", "curatorComment"],
+  properties: {
+    priority: { type: "string", enum: ["required", "recommended", "optional"] },
+    goalForStudent: { type: "string" },
+    curatorComment: { type: "string" }
   }
 };
 
@@ -316,10 +334,10 @@ export async function generateDiagnosticInsightsDraft(input: GeneratedStrategyIn
     "career_diagnostic_insights",
     strategySchema,
     [
-      "Ты помогаешь педагогу Private.Education вести профориентационную карту школьника 5-7 класса.",
+      "Ты помогаешь куратору Private.Education вести профориентационную карту школьника 5-7 класса.",
       "Сформируй черновик характеристики и стратегии на русском языке.",
       "Не ставь диагнозов, не делай окончательных выводов и не обещай результат.",
-      "Пиши как педагогический черновик: конкретно, осторожно, пригодно для согласования.",
+      "Пиши как кураторский черновик: конкретно, осторожно, пригодно для согласования.",
       "В areasToExpand и areasToCheck используй только ключи областей, которые есть во входных interests или visibility.",
       "recommendedFormats возвращай короткими ключами форматов или понятными названиями форматов."
     ].join(" "),
@@ -332,6 +350,50 @@ export async function generateDiagnosticInsightsDraft(input: GeneratedStrategyIn
 export async function generateCareerStrategyDraft(input: GeneratedStrategyInput) {
   const insights = await generateDiagnosticInsightsDraft(input);
   return insights.strategy;
+}
+
+function normalizeEventPriority(value: unknown, fallback: GeneratedEventAssignmentDraft["priority"]) {
+  return value === "required" || value === "recommended" || value === "optional" ? value : fallback;
+}
+
+export async function generateEventAssignmentDraft(input: {
+  studentName: string;
+  age: number;
+  grade: string;
+  city: string;
+  profile?: unknown;
+  parentRequest?: unknown;
+  event: unknown;
+  ruleScore: number;
+  ruleReasons: string[];
+  ruleRisks: string[];
+  fallback: Omit<GeneratedEventAssignmentDraft, "source">;
+}): Promise<GeneratedEventAssignmentDraft> {
+  const fallback: GeneratedEventAssignmentDraft = {
+    ...input.fallback,
+    source: "fallback"
+  };
+  const aiDraft = await callClaudeStructured<Record<string, unknown>>(
+    "career_event_assignment",
+    eventAssignmentSchema,
+    [
+      "Ты помогаешь куратору Private.Education назначить профориентационное мероприятие школьнику 5-7 класса.",
+      "Выбери осторожный приоритет: required только если событие явно проверяет сильную гипотезу или закрывает важный пробел; recommended для хорошего совпадения; optional для слабого или разведочного совпадения.",
+      "Сформулируй цель для ученика и комментарий куратора. Не делай окончательных выводов и не меняй профиль напрямую."
+    ].join(" "),
+    input
+  );
+
+  if (!aiDraft || typeof aiDraft !== "object") {
+    return fallback;
+  }
+
+  return {
+    priority: normalizeEventPriority(aiDraft.priority, fallback.priority),
+    goalForStudent: normalizeText(aiDraft.goalForStudent, fallback.goalForStudent, 500),
+    curatorComment: normalizeText(aiDraft.curatorComment, fallback.curatorComment, 700),
+    source: "ai"
+  };
 }
 
 function normalizeProposal(value: unknown): RuleProposal | null {
@@ -362,7 +424,7 @@ function normalizeProposal(value: unknown): RuleProposal | null {
     description: normalizeText(proposal.description, "Предложение изменения", 240),
     oldValue: normalizeText(proposal.oldValue, "Текущее состояние", 400),
     newValue: normalizeText(proposal.newValue, "Предлагаемое изменение", 600),
-    reason: `AI-черновик. ${normalizeText(proposal.reason, "Требуется проверка педагогом перед применением.", 800)}`
+    reason: `AI-черновик. ${normalizeText(proposal.reason, "Требуется проверка куратором перед применением.", 800)}`
   };
 }
 
@@ -462,12 +524,12 @@ function fallbackFeedbackAnalysis(input: FeedbackAnalysisInput): GeneratedAiInsi
 function fallbackSnapshotComparison(input: SnapshotComparisonInput): GeneratedAiInsight {
   return {
     title: "Динамика траектории",
-    summary: `${input.studentName}: состояние траектории обновлено. Сравнение снимков фиксирует, что изменения уже сохранены в журнале, но педагогический вывод требует проверки на следующих действиях.`,
+    summary: `${input.studentName}: состояние траектории обновлено. Сравнение снимков фиксирует, что изменения уже сохранены в журнале, но кураторский вывод требует проверки на следующих действиях.`,
     evidence: [input.reason, "Есть снимок состояния до изменения.", "Есть снимок состояния после изменения."],
     recommendations: [
       "Смотреть не только на текущий профиль, но и на динамику после диагностик и обратной связи.",
       "Проверить, подтверждается ли изменение следующим мероприятием или разговором.",
-      "Использовать вывод как черновик для обсуждения с педагогом."
+      "Использовать вывод как черновик для обсуждения с куратором."
     ],
     risks: ["Один шаг траектории не должен резко менять долгосрочную стратегию."],
     nextQuestions: [
@@ -485,10 +547,10 @@ export async function generateFeedbackAnalysis(input: FeedbackAnalysisInput): Pr
     "career_feedback_analysis",
     aiInsightSchema,
     [
-      "Ты помогаешь педагогу Private.Education разобрать обратную связь ученика после профориентационного мероприятия.",
-      "Верни педагогический AI-черновик на русском языке: что сигналит опыт, какие есть доказательства, что делать дальше, где риски и какие вопросы задать.",
+      "Ты помогаешь куратору Private.Education разобрать обратную связь ученика после профориентационного мероприятия.",
+      "Верни кураторский AI-черновик на русском языке: что сигналит опыт, какие есть доказательства, что делать дальше, где риски и какие вопросы задать.",
       "Не применяй изменения сам, не делай окончательных выводов по одному событию, не ставь диагнозы.",
-      "Пиши конкретно и в рамках архитектуры: обратная связь может породить change proposal, но применяет его только педагог."
+      "Пиши конкретно и в рамках архитектуры: обратная связь может породить change proposal, но применяет его только куратор."
     ].join(" "),
     input
   );
@@ -502,10 +564,10 @@ export async function generateSnapshotComparison(input: SnapshotComparisonInput)
     "career_snapshot_comparison",
     aiInsightSchema,
     [
-      "Ты помогаешь педагогу Private.Education сравнить снимки состояния карьерной карты ученика до и после важного действия.",
-      "Сравни профиль, стратегию, карту мероприятий и насмотренность только как педагогический черновик.",
+      "Ты помогаешь куратору Private.Education сравнить снимки состояния карьерной карты ученика до и после важного действия.",
+      "Сравни профиль, стратегию, карту мероприятий и насмотренность только как кураторский черновик.",
       "Назови, что изменилось, на какие доказательства смотреть, что проверить дальше, какие риски есть.",
-      "Не предлагай применять изменения напрямую: все изменения идут через согласование педагога."
+      "Не предлагай применять изменения напрямую: все изменения идут через согласование куратора."
     ].join(" "),
     input
   );
@@ -519,14 +581,14 @@ export async function generateFeedbackProposals(signal: FeedbackSignal) {
     "career_feedback_proposals",
     proposalsSchema,
     [
-      "Ты помогаешь педагогу Private.Education разобрать обратную связь после мероприятия школьника 5-7 класса.",
-      "Сформируй 0-4 осторожных предложения изменений, которые педагог должен согласовать перед применением.",
+      "Ты помогаешь куратору Private.Education разобрать обратную связь после мероприятия школьника 5-7 класса.",
+      "Сформируй 0-4 осторожных предложения изменений, которые куратор должен согласовать перед применением.",
       "Не применяй изменения сам. Не делай резких выводов по одному событию.",
       "Если interestScore >= 8, engagementScore >= 7 и wantContinue = yes, верни минимум 2 предложения: мягкое обновление профиля и рост насмотренности.",
       "Если fatigueScore >= 8, предложи корректировку нагрузки или стратегии.",
       "Если interestScore <= 4 и wantContinue = no, предложи сменить формат, а не исключать область.",
       "Если данных мало или событие нейтральное, верни пустой список.",
-      "proposalType выбирай только из поддержанного enum. reason объясняет педагогическую логику."
+      "proposalType выбирай только из поддержанного enum. reason объясняет кураторскую логику."
     ].join(" "),
     signal
   );

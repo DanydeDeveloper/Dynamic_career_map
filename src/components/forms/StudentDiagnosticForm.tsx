@@ -88,7 +88,7 @@ export function StudentDiagnosticForm({ studentId }: { studentId: string }) {
           <textarea id="summaryText" name="summaryText" placeholder="Можно оставить пустым: система соберет базовый текст сама" />
         </div>
         <div className="field full">
-          <label htmlFor="curatorComment">Комментарий педагога</label>
+          <label htmlFor="curatorComment">Комментарий куратора</label>
           <textarea id="curatorComment" name="curatorComment" />
         </div>
         <div className="field full">

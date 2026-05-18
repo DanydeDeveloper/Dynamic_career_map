@@ -39,7 +39,7 @@ export function NewStudentForm() {
         </div>
         <div className="field full">
           <label htmlFor="curatorName">Куратор</label>
-          <input id="curatorName" name="curatorName" placeholder="Имя педагога" />
+          <input id="curatorName" name="curatorName" placeholder="Имя куратора" />
         </div>
         <div className="field full">
           <FormPendingNotice

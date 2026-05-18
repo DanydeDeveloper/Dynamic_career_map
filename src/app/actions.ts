@@ -7,6 +7,7 @@ import { professionalAreas } from "@/lib/constants";
 import { canManageApprovals, canManageEvents, canManageStudents, requireUser } from "@/lib/authz";
 import {
   generateDiagnosticInsightsDraft,
+  generateEventAssignmentDraft,
   generateFeedbackAnalysis,
   generateFeedbackProposals,
   generateSnapshotComparison
@@ -20,6 +21,7 @@ import {
 } from "@/lib/audit-log";
 import { parseJson } from "@/lib/format";
 import { applyApprovedProposal } from "@/lib/proposal-application";
+import { scoreEventForStudent } from "@/lib/event-matching";
 
 const json = (value: unknown) => JSON.stringify(value);
 
@@ -160,7 +162,7 @@ export async function createStudentAction(formData: FormData) {
       city: text(formData, "city") || "Москва",
       school: optionalText(formData, "school"),
       parentName: optionalText(formData, "parentName"),
-      curatorName: optionalText(formData, "curatorName") || user.name || "Педагог",
+      curatorName: optionalText(formData, "curatorName") || user.name || "Куратор",
       curatorId: user.id
     }
   });
@@ -610,6 +612,68 @@ export async function assignEventToStudentAction(formData: FormData) {
     throw new Error("Нужно выбрать ученика и мероприятие.");
   }
 
+  const [student, event] = await Promise.all([
+    prisma.student.findUnique({
+      where: { id: studentId, ...(user.role === "ADMIN" ? {} : { curatorId: user.id }) },
+      include: {
+        profile: true,
+        parentRequest: true,
+        eventMap: {
+          select: {
+            eventId: true
+          }
+        }
+      }
+    }),
+    prisma.event.findFirst({
+      where: {
+        id: eventId,
+        status: "approved"
+      }
+    })
+  ]);
+
+  if (!student) {
+    throw new Error("Ученик не найден или не прикреплен к этому куратору.");
+  }
+
+  if (!event) {
+    throw new Error("Назначать можно только согласованные мероприятия.");
+  }
+
+  const requestedPriority = text(formData, "priority");
+  const manualGoal = text(formData, "goalForStudent");
+  const manualComment = optionalText(formData, "curatorComment");
+  const recommendation = scoreEventForStudent(student, event);
+  const fallbackPriority = recommendation.score >= 75 ? "required" : recommendation.score >= 35 ? "recommended" : "optional";
+  const fallbackAssignment = {
+    priority: fallbackPriority as "required" | "recommended" | "optional",
+    goalForStudent: recommendation.goalForStudent,
+    curatorComment: recommendation.curatorComment
+  };
+  const shouldAutoFill = requestedPriority === "auto" || !requestedPriority || !manualGoal || !manualComment;
+  const autoAssignment = shouldAutoFill
+    ? await generateEventAssignmentDraft({
+        studentName: student.name,
+        age: student.age,
+        grade: student.grade,
+        city: student.city,
+        profile: student.profile,
+        parentRequest: student.parentRequest,
+        event,
+        ruleScore: recommendation.score,
+        ruleReasons: recommendation.reasons,
+        ruleRisks: recommendation.risks,
+        fallback: fallbackAssignment
+      })
+    : null;
+  const priority =
+    requestedPriority && requestedPriority !== "auto"
+      ? requestedPriority
+      : autoAssignment?.priority ?? fallbackAssignment.priority;
+  const goalForStudent = manualGoal || autoAssignment?.goalForStudent || fallbackAssignment.goalForStudent;
+  const curatorComment = manualComment || autoAssignment?.curatorComment || fallbackAssignment.curatorComment;
+
   const beforeState = await getStudentAuditState(studentId);
   const existingMapItem = await prisma.studentEventMap.findUnique({
     where: {
@@ -629,16 +693,16 @@ export async function assignEventToStudentAction(formData: FormData) {
       }
     },
     update: {
-      priority: text(formData, "priority") || "recommended",
-      goalForStudent: text(formData, "goalForStudent") || "Проверить гипотезу интереса",
-      curatorComment: optionalText(formData, "curatorComment")
+      priority,
+      goalForStudent,
+      curatorComment
     },
     create: {
       studentId,
       eventId,
-      priority: text(formData, "priority") || "recommended",
-      goalForStudent: text(formData, "goalForStudent") || "Проверить гипотезу интереса",
-      curatorComment: optionalText(formData, "curatorComment"),
+      priority,
+      goalForStudent,
+      curatorComment,
       status: "planned"
     }
   });

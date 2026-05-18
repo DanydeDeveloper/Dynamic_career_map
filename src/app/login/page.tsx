@@ -17,8 +17,8 @@ const demoProfiles = [
     icon: ShieldCheck
   },
   {
-    role: "Учитель",
-    title: "Педагог",
+    role: "Куратор",
+    title: "Куратор",
     email: "curator@private.education",
     description: "Диагностика, подбор мероприятий, обратная связь и согласование изменений.",
     icon: GraduationCap
@@ -67,7 +67,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <p className="eyebrow">Dynamic Career Map</p>
         <h1 className="page-title">Выберите профиль</h1>
         <p className="page-description">
-          Откройте приложение как администратор, педагог, родитель или ученик. Демо-логин выбирается здесь, без
+          Откройте приложение как администратор, куратор, родитель или ученик. Демо-логин выбирается здесь, без
           ручного ввода email и пароля.
         </p>
 

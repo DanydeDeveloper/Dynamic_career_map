@@ -2,7 +2,7 @@ export type AppRole = "ADMIN" | "CURATOR" | "PARENT" | "STUDENT";
 
 export const roleLabels: Record<AppRole, string> = {
   ADMIN: "Администратор",
-  CURATOR: "Педагог",
+  CURATOR: "Куратор",
   PARENT: "Родитель",
   STUDENT: "Ученик"
 };

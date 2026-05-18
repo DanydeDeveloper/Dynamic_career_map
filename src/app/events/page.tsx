@@ -15,11 +15,32 @@ type EventsPageProps = {
 
 const moderationTabs = [
   ["all", "Все"],
-  ["approved", eventModerationStatusLabels.approved],
   ["needs_review", eventModerationStatusLabels.needs_review],
+  ["approved", eventModerationStatusLabels.approved],
   ["draft", eventModerationStatusLabels.draft],
   ["rejected", eventModerationStatusLabels.rejected]
 ] as const;
+
+function sortEventsForCurator<T extends { status: string; date: Date }>(events: T[]) {
+  const now = new Date();
+
+  return [...events].sort((a, b) => {
+    const moderationDiff = Number(b.status === "needs_review") - Number(a.status === "needs_review");
+
+    if (moderationDiff !== 0) {
+      return moderationDiff;
+    }
+
+    const aFuture = a.date >= now;
+    const bFuture = b.date >= now;
+
+    if (aFuture !== bFuture) {
+      return aFuture ? -1 : 1;
+    }
+
+    return a.date.getTime() - b.date.getTime();
+  });
+}
 
 export default async function EventsPage({ searchParams }: EventsPageProps) {
   const user = await requireUser();
@@ -36,7 +57,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
             <p className="eyebrow">Карта мероприятий</p>
             <h1 className="page-title">Назначенные профпробы</h1>
             <p className="page-description">
-              Здесь показаны мероприятия, которые педагог уже включил в карту. После участия можно заполнить обратную связь.
+              Здесь показаны мероприятия, которые куратор уже включил в карту. После участия можно заполнить обратную связь.
             </p>
           </div>
           <Link className="button primary" href="/feedback">
@@ -49,7 +70,13 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
             students.map((student) => (
               <section className="section" key={student.id}>
                 <h2 className="section-title">{student.name}</h2>
-                <EventMapTimeline rows={student.eventMap} emptyText="Пока нет назначенных мероприятий." showStatusControls />
+                <EventMapTimeline
+                  rows={student.eventMap}
+                  emptyText="Пока нет назначенных мероприятий."
+                  showStatusControls
+                  curatorName={student.curatorName}
+                  priorityFirst
+                />
               </section>
             ))
           ) : (
@@ -61,7 +88,9 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
   }
 
   const [events, approvedEvents, students] = await Promise.all([getEvents(), getApprovedEvents(), getStudentsForForms(user)]);
-  const visibleEvents = currentStatus === "all" ? events : events.filter((event) => event.status === currentStatus);
+  const visibleEvents = sortEventsForCurator(
+    currentStatus === "all" ? events : events.filter((event) => event.status === currentStatus)
+  );
 
   return (
     <>
@@ -70,7 +99,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
           <p className="eyebrow">База мероприятий</p>
           <h1 className="page-title">События и профпробы</h1>
           <p className="page-description">
-            Управленческий экран педагога: база событий, ручное добавление и назначение мероприятий ученикам.
+            Управленческий экран куратора: сначала события на согласование, затем ближайшие по дате. Ниже можно вручную назначить мероприятие конкретному ученику.
           </p>
         </div>
         <div className="toolbar">
@@ -93,17 +122,17 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
         ))}
       </nav>
 
+      <AssignEventForm students={students} events={approvedEvents} />
+
+      <section className="section">
+        <h2 className="section-title">Мероприятия на согласование и ближайшие даты</h2>
+        <EventTable rows={visibleEvents.map((event) => ({ event }))} showModerationActions />
+      </section>
+
       <section className="section">
         <h2 className="section-title">Календарь мероприятий</h2>
         <EventMapTimeline rows={visibleEvents.map((event) => ({ event }))} />
       </section>
-
-      <section className="section">
-        <h2 className="section-title">Модерация событий</h2>
-        <EventTable rows={visibleEvents.map((event) => ({ event }))} showModerationActions />
-      </section>
-
-      <AssignEventForm students={students} events={approvedEvents} />
     </>
   );
 }

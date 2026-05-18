@@ -320,7 +320,7 @@ const sourceLabels: Record<string, string> = {
   feedback: "Обратная связь",
   claude: "Claude",
   rule_based: "Правила",
-  curator: "Педагог",
+  curator: "Куратор",
   teacher_approval: "Согласование",
   moderation: "Модерация",
   status_update: "Статус"

@@ -71,7 +71,7 @@ export function StudentAiInsights({ insights }: StudentAiInsightsProps) {
       <div className="panel-header">
         <div>
           <h2 className="panel-title">AI-анализ траектории</h2>
-          <p className="panel-subtitle">Черновики для педагога: интерпретация диагностики, разбор опыта и сравнение версий.</p>
+          <p className="panel-subtitle">Черновики для куратора: интерпретация диагностики, разбор опыта и сравнение версий.</p>
         </div>
         <Sparkles size={20} aria-hidden="true" />
       </div>
@@ -107,7 +107,7 @@ export function StudentAiInsights({ insights }: StudentAiInsightsProps) {
                   </div>
                   <div className="history-note compact">
                     <Sparkles size={16} aria-hidden="true" />
-                    <span>AI-черновик не применяет изменения сам. Решения проходят через предложения изменений и согласование педагога.</span>
+                    <span>AI-черновик не применяет изменения сам. Решения проходят через предложения изменений и согласование куратора.</span>
                   </div>
                 </article>
               );

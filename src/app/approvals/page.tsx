@@ -18,7 +18,7 @@ export default async function ApprovalsPage() {
     <>
       <header className="page-header">
         <div>
-          <p className="eyebrow">Согласование педагога</p>
+          <p className="eyebrow">Согласование куратора</p>
           <h1 className="page-title">Предложения изменений</h1>
           <p className="page-description">
             Система может предлагать обновления профиля, насмотренности, стратегии и карты. После согласования

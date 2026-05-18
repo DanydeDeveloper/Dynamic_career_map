@@ -36,7 +36,8 @@ export function AssignEventForm({ students, events }: AssignEventFormProps) {
         </div>
         <div className="field">
           <label htmlFor="priority">Приоритет</label>
-          <select id="priority" name="priority" defaultValue="recommended">
+          <select id="priority" name="priority" defaultValue="auto">
+            <option value="auto">Авто по профилю</option>
             {Object.entries(priorityLabels).map(([key, label]) => (
               <option key={key} value={key}>
                 {label}
@@ -46,11 +47,11 @@ export function AssignEventForm({ students, events }: AssignEventFormProps) {
         </div>
         <div className="field full">
           <label htmlFor="goalForStudent">Цель для ученика</label>
-          <textarea id="goalForStudent" name="goalForStudent" placeholder="Какую гипотезу проверяем этим событием?" />
+          <textarea id="goalForStudent" name="goalForStudent" placeholder="Можно оставить пустым: система предложит цель по профилю ученика." />
         </div>
         <div className="field full">
-          <label htmlFor="curatorComment">Комментарий педагога</label>
-          <textarea id="curatorComment" name="curatorComment" />
+          <label htmlFor="curatorComment">Комментарий куратора</label>
+          <textarea id="curatorComment" name="curatorComment" placeholder="Если оставить пустым, система добавит объяснение подбора." />
         </div>
         <div className="field full">
           <FormPendingNotice

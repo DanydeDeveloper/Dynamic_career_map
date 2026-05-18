@@ -34,6 +34,10 @@ export default async function StudentPage({ params }: StudentPageProps) {
   const areasToCheck = parseJson<string[]>(strategy?.areasToCheckJson ?? "[]", []);
   const recommendedFormats = parseJson<string[]>(strategy?.recommendedFormatsJson ?? "[]", []);
   const canManageStudent = canManageStudents(user.role);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const futureEvents = student.eventMap.filter((item) => item.event.date >= now);
+  const pastEvents = student.eventMap.filter((item) => item.event.date < now);
   const eventRecommendations = canManageStudent
     ? recommendEventsForStudent(student, await getApprovedEvents(), 5)
     : [];
@@ -64,18 +68,45 @@ export default async function StudentPage({ params }: StudentPageProps) {
             <h2 className="panel-title">Общая профориентационная характеристика</h2>
           </div>
           <div className="panel-body">
-            <ProfileSummary profile={student.profile} />
+            <ProfileSummary profile={student.profile} curatorName={student.curatorName} />
           </div>
         </div>
       </section>
 
-      <section className="section">
-        <StudentChangeHistory student={student} />
-      </section>
+      {canManageStudent ? (
+        <section className="section">
+          <StudentChangeHistory student={student} />
+        </section>
+      ) : (
+        <section className="section grid two">
+          <div>
+            <h2 className="section-title">Карта будущих мероприятий</h2>
+            <EventMapTimeline
+              rows={futureEvents}
+              emptyText="В карте пока нет будущих мероприятий."
+              showStatusControls
+              curatorName={student.curatorName}
+              priorityFirst
+            />
+          </div>
+          <div>
+            <h2 className="section-title">Прошедшие мероприятия и обратная связь</h2>
+            <EventMapTimeline
+              rows={pastEvents}
+              emptyText="Прошедших мероприятий пока нет."
+              showStatusControls
+              curatorName={student.curatorName}
+              priorityFirst
+            />
+          </div>
+        </section>
+      )}
 
-      <section className="section">
-        <StudentAiInsights insights={student.aiInsights} />
-      </section>
+      {canManageStudent ? (
+        <section className="section">
+          <StudentAiInsights insights={student.aiInsights} />
+        </section>
+      ) : null}
 
       <section className="section">
         <div className="panel">
@@ -196,10 +227,18 @@ export default async function StudentPage({ params }: StudentPageProps) {
         </div>
       </section>
 
-      <section className="section">
-        <h2 className="section-title">Карта мероприятий</h2>
-        <EventMapTimeline rows={student.eventMap} emptyText="В карте пока нет назначенных мероприятий." showStatusControls />
-      </section>
+      {canManageStudent ? (
+        <section className="section">
+          <h2 className="section-title">Карта мероприятий</h2>
+          <EventMapTimeline
+            rows={student.eventMap}
+            emptyText="В карте пока нет назначенных мероприятий."
+            showStatusControls
+            curatorName={student.curatorName}
+            priorityFirst
+          />
+        </section>
+      ) : null}
 
       {canManageStudent ? (
         <section className="section">
@@ -236,18 +275,20 @@ export default async function StudentPage({ params }: StudentPageProps) {
         </div>
       </section>
 
-      <section className="section">
-        <h2 className="section-title">Предложения изменений</h2>
-        <div className="grid">
-          {student.proposals.length > 0 ? (
-            student.proposals.map((proposal) => (
-              <ChangeProposalCard key={proposal.id} proposal={proposal} showActions={canManageApprovals(user.role)} />
-            ))
-          ) : (
-            <div className="empty-state">Активных предложений пока нет.</div>
-          )}
-        </div>
-      </section>
+      {canManageStudent ? (
+        <section className="section">
+          <h2 className="section-title">Предложения изменений</h2>
+          <div className="grid">
+            {student.proposals.length > 0 ? (
+              student.proposals.map((proposal) => (
+                <ChangeProposalCard key={proposal.id} proposal={proposal} showActions={canManageApprovals(user.role)} />
+              ))
+            ) : (
+              <div className="empty-state">Активных предложений пока нет.</div>
+            )}
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }

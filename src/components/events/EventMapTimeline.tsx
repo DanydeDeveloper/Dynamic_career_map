@@ -30,6 +30,8 @@ type EventMapTimelineProps = {
   rows: EventMapRow[];
   emptyText?: string;
   showStatusControls?: boolean;
+  curatorName?: string | null;
+  priorityFirst?: boolean;
 };
 
 const statusSteps = [
@@ -112,12 +114,32 @@ function statusForRow(row: EventMapRow, now: Date) {
   return eventStatusLabels[status] ?? status;
 }
 
-function buildHorizons(rows: EventMapRow[]) {
+const priorityRank: Record<string, number> = {
+  required: 0,
+  recommended: 1,
+  optional: 2
+};
+
+function sortRows(rows: EventMapRow[], priorityFirst: boolean) {
+  return [...rows].sort((a, b) => {
+    if (priorityFirst) {
+      const priorityDiff = (priorityRank[a.priority ?? ""] ?? 9) - (priorityRank[b.priority ?? ""] ?? 9);
+
+      if (priorityDiff !== 0) {
+        return priorityDiff;
+      }
+    }
+
+    return a.event.date.getTime() - b.event.date.getTime();
+  });
+}
+
+function buildHorizons(rows: EventMapRow[], priorityFirst: boolean) {
   const now = new Date();
   const month1 = addMonths(now, 1);
   const month3 = addMonths(now, 3);
   const month12 = addMonths(now, 12);
-  const sorted = [...rows].sort((a, b) => a.event.date.getTime() - b.event.date.getTime());
+  const sorted = sortRows(rows, priorityFirst);
 
   const past = sorted.filter((row) => row.event.date < now);
   const next1 = sorted.filter((row) => row.event.date >= now && row.event.date <= month1);
@@ -162,14 +184,16 @@ function buildHorizons(rows: EventMapRow[]) {
 export function EventMapTimeline({
   rows,
   emptyText = "Мероприятия пока не добавлены.",
-  showStatusControls = false
+  showStatusControls = false,
+  curatorName,
+  priorityFirst = false
 }: EventMapTimelineProps) {
   if (rows.length === 0) {
     return <div className="empty-state">{emptyText}</div>;
   }
 
   const now = new Date();
-  const horizons = buildHorizons(rows).filter((horizon) => horizon.rows.length > 0);
+  const horizons = buildHorizons(rows, priorityFirst).filter((horizon) => horizon.rows.length > 0);
 
   return (
     <div className="event-map">
@@ -228,7 +252,12 @@ export function EventMapTimeline({
                             ))}
                           </div>
 
-                          {row.curatorComment ? <p className="muted">{row.curatorComment}</p> : null}
+                          {row.curatorComment ? (
+                            <p className="muted">
+                              <strong>Комментарий куратора{curatorName ? ` ${curatorName}` : ""}:</strong>{" "}
+                              {row.curatorComment}
+                            </p>
+                          ) : null}
 
                           {canShowControls ? (
                             <div className="event-status-controls" aria-label={`Статус мероприятия ${row.event.title}`}>
