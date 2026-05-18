@@ -164,6 +164,39 @@ export async function getPendingProposals(user: CurrentUser) {
   });
 }
 
+export async function getPendingStudentEventSelections(user: CurrentUser) {
+  return prisma.studentEventMap.findMany({
+    where: {
+      priority: "student_choice",
+      status: "selected",
+      student: studentAccessWhere(user)
+    },
+    include: {
+      student: {
+        select: {
+          id: true,
+          name: true,
+          grade: true,
+          city: true
+        }
+      },
+      event: {
+        select: {
+          id: true,
+          title: true,
+          date: true,
+          time: true,
+          format: true,
+          eventType: true,
+          city: true,
+          goal: true
+        }
+      }
+    },
+    orderBy: [{ createdAt: "desc" }]
+  });
+}
+
 export async function getStudentsForForms(user: CurrentUser) {
   return prisma.student.findMany({
     where: studentAccessWhere(user),

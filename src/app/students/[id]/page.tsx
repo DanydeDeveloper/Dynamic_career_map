@@ -6,7 +6,6 @@ import { EventRecommendations } from "@/components/events/EventRecommendations";
 import { EventMapTimeline, type EventMapRow } from "@/components/events/EventMapTimeline";
 import { StudentAiInsights } from "@/components/students/StudentAiInsights";
 import { ProfileSummary } from "@/components/students/ProfileSummary";
-import { StudentChangeHistory } from "@/components/students/StudentChangeHistory";
 import { VisibilityBars } from "@/components/students/VisibilityBars";
 import { getApprovedEvents, getStudentProfile } from "@/lib/data";
 import { canManageApprovals, canManageStudents, requireUser } from "@/lib/authz";
@@ -173,18 +172,14 @@ export default async function StudentPage({ params }: StudentPageProps) {
         </div>
       </section>
 
-      {canManageStudent ? (
-        <section className="section">
-          <StudentChangeHistory student={student} />
-        </section>
-      ) : (
+      {!canManageStudent ? (
         <StudentEventMapForFamily
           assignedRows={student.eventMap}
           availableRows={availableEventRows}
           studentId={student.id}
           curatorName={student.curatorName}
         />
-      )}
+      ) : null}
 
       {canManageStudent ? (
         <section className="section">

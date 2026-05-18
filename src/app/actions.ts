@@ -431,6 +431,7 @@ export async function saveStudentDiagnosticAction(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/students");
   revalidatePath("/events");
+  revalidatePath("/approvals");
   revalidatePath("/feedback");
   revalidatePath(`/students/${studentId}`);
   redirect(`/students/${studentId}`);
@@ -766,6 +767,7 @@ export async function assignEventToStudentAction(formData: FormData) {
   revalidatePath("/students");
   revalidatePath("/events");
   revalidatePath("/feedback");
+  revalidatePath("/approvals");
   revalidatePath(`/students/${studentId}`);
   redirect(`/students/${studentId}`);
 }
@@ -1016,6 +1018,7 @@ export async function reviewStudentEventSelectionAction(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/students");
   revalidatePath("/events");
+  revalidatePath("/approvals");
   revalidatePath(`/students/${mapItem.studentId}`);
   revalidatePath("/feedback");
 }
