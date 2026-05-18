@@ -11,6 +11,7 @@ type ProfileSummaryProps = {
     curatorComment: string | null;
   } | null;
   curatorName?: string | null;
+  showCuratorComment?: boolean;
 };
 
 const inclinationLabels: Record<string, string> = {
@@ -37,7 +38,7 @@ const stabilityLabels: Record<string, string> = {
   stable: "устойчиво"
 };
 
-export function ProfileSummary({ profile, curatorName }: ProfileSummaryProps) {
+export function ProfileSummary({ profile, curatorName, showCuratorComment = true }: ProfileSummaryProps) {
   if (!profile) {
     return <div className="empty-state">Характеристика пока не сформирована.</div>;
   }
@@ -99,7 +100,7 @@ export function ProfileSummary({ profile, curatorName }: ProfileSummaryProps) {
         ))}
       </div>
 
-      {profile.curatorComment ? (
+      {showCuratorComment && profile.curatorComment ? (
         <>
           <div className="split-line" />
           <p>

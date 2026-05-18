@@ -4,6 +4,8 @@ import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton
 type EventFeedbackFormProps = {
   students: Array<{ id: string; name: string; grade: string }>;
   events: Array<{ id: string; title: string; city: string }>;
+  defaultStudentId?: string;
+  defaultEventId?: string;
 };
 
 const feedbackTags = [
@@ -17,7 +19,7 @@ const feedbackTags = [
   "создание продукта"
 ];
 
-export function EventFeedbackForm({ students, events }: EventFeedbackFormProps) {
+export function EventFeedbackForm({ students, events, defaultStudentId, defaultEventId }: EventFeedbackFormProps) {
   return (
     <section className="panel">
       <div className="panel-header">
@@ -26,7 +28,7 @@ export function EventFeedbackForm({ students, events }: EventFeedbackFormProps) 
       <form action={submitFeedbackAction} className="panel-body form-grid">
         <div className="field">
           <label htmlFor="studentId">Ученик</label>
-          <select id="studentId" name="studentId" required>
+          <select id="studentId" name="studentId" required defaultValue={defaultStudentId}>
             {students.map((student) => (
               <option key={student.id} value={student.id}>
                 {student.name} · {student.grade}
@@ -37,7 +39,7 @@ export function EventFeedbackForm({ students, events }: EventFeedbackFormProps) 
 
         <div className="field">
           <label htmlFor="eventId">Мероприятие</label>
-          <select id="eventId" name="eventId" required>
+          <select id="eventId" name="eventId" required defaultValue={defaultEventId}>
             {events.map((event) => (
               <option key={event.id} value={event.id}>
                 {event.title} · {event.city}

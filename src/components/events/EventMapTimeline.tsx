@@ -7,6 +7,7 @@ import { formatDate, parseJson } from "@/lib/format";
 
 export type EventMapRow = {
   id?: string;
+  studentId?: string;
   priority?: string;
   status?: string;
   goalForStudent?: string;
@@ -32,6 +33,7 @@ type EventMapTimelineProps = {
   showStatusControls?: boolean;
   curatorName?: string | null;
   priorityFirst?: boolean;
+  showCuratorComment?: boolean;
 };
 
 const statusSteps = [
@@ -186,7 +188,8 @@ export function EventMapTimeline({
   emptyText = "Мероприятия пока не добавлены.",
   showStatusControls = false,
   curatorName,
-  priorityFirst = false
+  priorityFirst = false,
+  showCuratorComment = true
 }: EventMapTimelineProps) {
   if (rows.length === 0) {
     return <div className="empty-state">{emptyText}</div>;
@@ -252,7 +255,7 @@ export function EventMapTimeline({
                             ))}
                           </div>
 
-                          {row.curatorComment ? (
+                          {showCuratorComment && row.curatorComment ? (
                             <p className="muted">
                               <strong>Комментарий куратора{curatorName ? ` ${curatorName}` : ""}:</strong>{" "}
                               {row.curatorComment}
@@ -270,7 +273,11 @@ export function EventMapTimeline({
                                   return (
                                     <Link
                                       className={`status-step ${isActive ? "active" : ""}`}
-                                      href="/feedback"
+                                      href={
+                                        row.studentId
+                                          ? `/feedback?studentId=${row.studentId}&eventId=${row.event.id}`
+                                          : "/feedback"
+                                      }
                                       key={step.value}
                                       title="Заполнить обратную связь"
                                     >

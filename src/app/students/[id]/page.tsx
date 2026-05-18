@@ -20,6 +20,92 @@ type StudentPageProps = {
 
 export const dynamic = "force-dynamic";
 
+type StudentProfileData = NonNullable<Awaited<ReturnType<typeof getStudentProfile>>>;
+type StudentEventRow = StudentProfileData["eventMap"][number];
+
+function isFeedbackNeeded(row: StudentEventRow, today: Date) {
+  return row.status === "visited" || (row.event.date < today && row.status !== "feedback_completed");
+}
+
+function withoutRows(rows: StudentEventRow[], excluded: Set<string>) {
+  return rows.filter((row) => !excluded.has(row.id));
+}
+
+function buildStudentEventSections(rows: StudentEventRow[], today: Date) {
+  const feedbackNeeded = rows.filter((row) => isFeedbackNeeded(row, today));
+  const usedIds = new Set(feedbackNeeded.map((row) => row.id));
+  const recommended = withoutRows(rows, usedIds).filter((row) => row.priority === "required" || row.priority === "recommended");
+
+  for (const row of recommended) {
+    usedIds.add(row.id);
+  }
+
+  const planned = withoutRows(rows, usedIds).filter((row) => row.status === "planned" || row.status === "selected");
+
+  for (const row of planned) {
+    usedIds.add(row.id);
+  }
+
+  return [
+    {
+      key: "feedback",
+      title: "Посещенные, нужна обратная связь",
+      emptyText: "Нет мероприятий, по которым сейчас нужна обратная связь.",
+      rows: feedbackNeeded
+    },
+    {
+      key: "recommended",
+      title: "Рекомендовано куратором",
+      emptyText: "Куратор пока не добавил приоритетные рекомендации.",
+      rows: recommended
+    },
+    {
+      key: "planned",
+      title: "Запланированные и на подтверждение",
+      emptyText: "Пока нет мероприятий, ожидающих выбора или подтверждения.",
+      rows: planned
+    },
+    {
+      key: "other",
+      title: "Остальные мероприятия",
+      emptyText: "Других мероприятий пока нет.",
+      rows: withoutRows(rows, usedIds)
+    }
+  ];
+}
+
+function StudentEventMapForFamily({ rows, curatorName }: { rows: StudentEventRow[]; curatorName?: string | null }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sections = buildStudentEventSections(rows, today);
+
+  return (
+    <section className="section">
+      <h2 className="section-title">Карта мероприятий</h2>
+      <div className="grid">
+        {sections.map((section) => (
+          <div className="panel" key={section.key}>
+            <div className="panel-header">
+              <h3 className="panel-title">{section.title}</h3>
+              <span className="tag primary">{section.rows.length}</span>
+            </div>
+            <div className="panel-body">
+              <EventMapTimeline
+                rows={section.rows}
+                emptyText={section.emptyText}
+                showStatusControls
+                curatorName={curatorName}
+                priorityFirst
+                showCuratorComment={false}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default async function StudentPage({ params }: StudentPageProps) {
   const { id } = await params;
   const user = await requireUser();
@@ -34,10 +120,6 @@ export default async function StudentPage({ params }: StudentPageProps) {
   const areasToCheck = parseJson<string[]>(strategy?.areasToCheckJson ?? "[]", []);
   const recommendedFormats = parseJson<string[]>(strategy?.recommendedFormatsJson ?? "[]", []);
   const canManageStudent = canManageStudents(user.role);
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const futureEvents = student.eventMap.filter((item) => item.event.date >= now);
-  const pastEvents = student.eventMap.filter((item) => item.event.date < now);
   const eventRecommendations = canManageStudent
     ? recommendEventsForStudent(student, await getApprovedEvents(), 5)
     : [];
@@ -68,7 +150,11 @@ export default async function StudentPage({ params }: StudentPageProps) {
             <h2 className="panel-title">Общая профориентационная характеристика</h2>
           </div>
           <div className="panel-body">
-            <ProfileSummary profile={student.profile} curatorName={student.curatorName} />
+            <ProfileSummary
+              profile={student.profile}
+              curatorName={student.curatorName}
+              showCuratorComment={canManageStudent}
+            />
           </div>
         </div>
       </section>
@@ -78,28 +164,7 @@ export default async function StudentPage({ params }: StudentPageProps) {
           <StudentChangeHistory student={student} />
         </section>
       ) : (
-        <section className="section grid two">
-          <div>
-            <h2 className="section-title">Карта будущих мероприятий</h2>
-            <EventMapTimeline
-              rows={futureEvents}
-              emptyText="В карте пока нет будущих мероприятий."
-              showStatusControls
-              curatorName={student.curatorName}
-              priorityFirst
-            />
-          </div>
-          <div>
-            <h2 className="section-title">Прошедшие мероприятия и обратная связь</h2>
-            <EventMapTimeline
-              rows={pastEvents}
-              emptyText="Прошедших мероприятий пока нет."
-              showStatusControls
-              curatorName={student.curatorName}
-              priorityFirst
-            />
-          </div>
-        </section>
+        <StudentEventMapForFamily rows={student.eventMap} curatorName={student.curatorName} />
       )}
 
       {canManageStudent ? (

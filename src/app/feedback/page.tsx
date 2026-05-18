@@ -4,6 +4,13 @@ import { canManageEvents, requireUser } from "@/lib/authz";
 
 export const dynamic = "force-dynamic";
 
+type FeedbackPageProps = {
+  searchParams?: Promise<{
+    studentId?: string;
+    eventId?: string;
+  }>;
+};
+
 function uniqueEvents(
   students: Awaited<ReturnType<typeof getDashboardData>>
 ): Array<{ id: string; title: string; city: string }> {
@@ -19,8 +26,9 @@ function uniqueEvents(
     });
 }
 
-export default async function FeedbackPage() {
+export default async function FeedbackPage({ searchParams }: FeedbackPageProps) {
   const user = await requireUser();
+  const params = await searchParams;
   const students = await getStudentsForForms(user);
   const events = canManageEvents(user.role) ? await getEvents() : uniqueEvents(await getDashboardData(user));
 
@@ -38,7 +46,12 @@ export default async function FeedbackPage() {
       </header>
 
       {students.length > 0 && events.length > 0 ? (
-        <EventFeedbackForm students={students} events={events} />
+        <EventFeedbackForm
+          students={students}
+          events={events}
+          defaultStudentId={params?.studentId}
+          defaultEventId={params?.eventId}
+        />
       ) : (
         <div className="empty-state">Пока нет доступных учеников или назначенных мероприятий для обратной связи.</div>
       )}
