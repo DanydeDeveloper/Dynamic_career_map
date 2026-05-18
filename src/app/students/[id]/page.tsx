@@ -24,7 +24,10 @@ type StudentProfileData = NonNullable<Awaited<ReturnType<typeof getStudentProfil
 type StudentEventRow = StudentProfileData["eventMap"][number];
 
 function isFeedbackNeeded(row: EventMapRow) {
-  return row.status === "visited";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return row.status === "visited" && row.event.date <= today;
 }
 
 function withoutRows(rows: EventMapRow[], excluded: Set<string>) {

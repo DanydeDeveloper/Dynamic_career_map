@@ -107,7 +107,7 @@ function statusForRow(row: EventMapRow, now: Date) {
     return eventStatusLabels[status] ?? status;
   }
 
-  if (status === "visited") {
+  if (status === "visited" && row.event.date <= now) {
     return "Нужна обратная связь";
   }
 
