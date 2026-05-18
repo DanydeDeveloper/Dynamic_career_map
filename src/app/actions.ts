@@ -770,6 +770,148 @@ export async function assignEventToStudentAction(formData: FormData) {
   redirect(`/students/${studentId}`);
 }
 
+export async function selectEventForStudentAction(formData: FormData) {
+  const user = await requireUser();
+  const studentId = text(formData, "studentId");
+  const eventId = text(formData, "eventId");
+
+  if (!studentId || !eventId) {
+    throw new Error("Нужно выбрать ученика и мероприятие.");
+  }
+
+  const [student, event] = await Promise.all([
+    prisma.student.findUnique({
+      where: { id: studentId },
+      include: {
+        profile: true,
+        parentRequest: true,
+        eventMap: {
+          select: {
+            eventId: true
+          }
+        }
+      }
+    }),
+    prisma.event.findFirst({
+      where: {
+        id: eventId,
+        status: "approved"
+      }
+    })
+  ]);
+
+  if (!student) {
+    throw new Error("Ученик не найден.");
+  }
+
+  const canSelect =
+    user.role === "ADMIN" ||
+    student.curatorId === user.id ||
+    student.parentId === user.id ||
+    student.userId === user.id;
+
+  if (!canSelect) {
+    throw new Error("Недостаточно прав для выбора мероприятия.");
+  }
+
+  if (!event) {
+    throw new Error("Выбирать можно только согласованные мероприятия.");
+  }
+
+  const beforeState = await getStudentAuditState(studentId);
+  const existingMapItem = await prisma.studentEventMap.findUnique({
+    where: {
+      studentId_eventId: {
+        studentId,
+        eventId
+      }
+    },
+    include: { event: { select: { title: true } } }
+  });
+  const recommendation = scoreEventForStudent(student, event);
+  const priority = recommendation.score >= 75 ? "required" : recommendation.score >= 35 ? "recommended" : "optional";
+  const mapItem = await prisma.studentEventMap.upsert({
+    where: {
+      studentId_eventId: {
+        studentId,
+        eventId
+      }
+    },
+    update: {
+      status: "selected"
+    },
+    create: {
+      studentId,
+      eventId,
+      priority,
+      status: "selected",
+      goalForStudent: recommendation.goalForStudent,
+      curatorComment: recommendation.curatorComment
+    }
+  });
+  const afterState = await getStudentAuditState(studentId);
+
+  await createAuditLog({
+    studentId,
+    eventId,
+    actorId: user.id,
+    action: existingMapItem ? "event_map.event_selected" : "event_map.event_requested",
+    targetType: "event_map",
+    targetId: mapItem.id,
+    source: user.role === "STUDENT" ? "student" : user.role === "PARENT" ? "parent" : "curator",
+    summary: existingMapItem
+      ? "Ученик подтвердил выбранное мероприятие в карте."
+      : "Ученик выбрал мероприятие из общего списка.",
+    before: existingMapItem
+      ? {
+          id: existingMapItem.id,
+          eventId: existingMapItem.eventId,
+          eventTitle: existingMapItem.event.title,
+          priority: existingMapItem.priority,
+          status: existingMapItem.status,
+          goalForStudent: existingMapItem.goalForStudent,
+          curatorComment: existingMapItem.curatorComment
+        }
+      : null,
+    after: pickStudentAuditTarget(afterState, "event_map"),
+    metadata: {
+      priority: mapItem.priority,
+      status: mapItem.status
+    }
+  });
+
+  await createStudentSnapshot({
+    studentId,
+    actorId: user.id,
+    snapshotType: "event_map",
+    stage: "before",
+    source: "student_selection",
+    relatedType: "event",
+    relatedId: eventId,
+    reason: "До выбора мероприятия учеником.",
+    state: beforeState
+  });
+
+  await createStudentSnapshot({
+    studentId,
+    actorId: user.id,
+    snapshotType: "event_map",
+    stage: "after",
+    source: "student_selection",
+    relatedType: "event",
+    relatedId: eventId,
+    reason: "После выбора мероприятия учеником.",
+    state: afterState
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/students");
+  revalidatePath("/events");
+  revalidatePath("/feedback");
+  revalidatePath(`/students/${studentId}`);
+  redirect(`/students/${studentId}`);
+}
+
 export async function updateStudentEventStatusAction(formData: FormData) {
   const user = await requireUser();
   const studentEventMapId = text(formData, "studentEventMapId");

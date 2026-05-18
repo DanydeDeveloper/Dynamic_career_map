@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CalendarDays, Check, ClipboardCheck, Footprints } from "lucide-react";
-import { updateStudentEventStatusAction } from "@/app/actions";
+import { selectEventForStudentAction, updateStudentEventStatusAction } from "@/app/actions";
 import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { areaLabel, eventStatusLabels, eventTypeLabels, formatLabels, priorityLabels } from "@/lib/constants";
 import { formatDate, parseJson } from "@/lib/format";
@@ -34,6 +34,8 @@ type EventMapTimelineProps = {
   curatorName?: string | null;
   priorityFirst?: boolean;
   showCuratorComment?: boolean;
+  showSelectionControls?: boolean;
+  selectableStudentId?: string;
 };
 
 const statusSteps = [
@@ -106,10 +108,6 @@ function statusForRow(row: EventMapRow, now: Date) {
   }
 
   if (status === "visited") {
-    return "Нужна обратная связь";
-  }
-
-  if (row.event.date < now && status !== "selected") {
     return "Нужна обратная связь";
   }
 
@@ -189,7 +187,9 @@ export function EventMapTimeline({
   showStatusControls = false,
   curatorName,
   priorityFirst = false,
-  showCuratorComment = true
+  showCuratorComment = true,
+  showSelectionControls = false,
+  selectableStudentId
 }: EventMapTimelineProps) {
   if (rows.length === 0) {
     return <div className="empty-state">{emptyText}</div>;
@@ -220,6 +220,7 @@ export function EventMapTimeline({
                     const status = statusForRow(row, now);
                     const currentStatus = row.status ?? row.event.status;
                     const canShowControls = showStatusControls && Boolean(row.id);
+                    const canSelectEvent = showSelectionControls && selectableStudentId && !row.id;
 
                     return (
                       <article className="event-map-card" key={row.id ?? `${horizon.key}-${row.event.id}`}>
@@ -305,6 +306,21 @@ export function EventMapTimeline({
                                 );
                               })}
                             </div>
+                          ) : null}
+
+                          {canSelectEvent ? (
+                            <form action={selectEventForStudentAction} className="event-status-controls">
+                              <input name="studentId" type="hidden" value={selectableStudentId} />
+                              <input name="eventId" type="hidden" value={row.event.id} />
+                              <FormPendingNotice
+                                title="Мероприятие выбирается"
+                                description="Добавляем событие в карту, чтобы куратор увидел выбор."
+                              />
+                              <SubmitButton className="status-step active" pendingText="Выбираем...">
+                                <Check size={15} aria-hidden="true" />
+                                <span>Выбрать</span>
+                              </SubmitButton>
+                            </form>
                           ) : null}
                         </div>
                       </article>

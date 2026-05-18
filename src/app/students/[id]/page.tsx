@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { MessageSquarePlus } from "lucide-react";
 import { ChangeProposalCard } from "@/components/approvals/ChangeProposalCard";
 import { EventRecommendations } from "@/components/events/EventRecommendations";
-import { EventMapTimeline } from "@/components/events/EventMapTimeline";
+import { EventMapTimeline, type EventMapRow } from "@/components/events/EventMapTimeline";
 import { StudentAiInsights } from "@/components/students/StudentAiInsights";
 import { ProfileSummary } from "@/components/students/ProfileSummary";
 import { StudentChangeHistory } from "@/components/students/StudentChangeHistory";
@@ -23,27 +23,25 @@ export const dynamic = "force-dynamic";
 type StudentProfileData = NonNullable<Awaited<ReturnType<typeof getStudentProfile>>>;
 type StudentEventRow = StudentProfileData["eventMap"][number];
 
-function isFeedbackNeeded(row: StudentEventRow, today: Date) {
-  return row.status === "visited" || (row.event.date < today && row.status !== "feedback_completed");
+function isFeedbackNeeded(row: EventMapRow) {
+  return row.status === "visited";
 }
 
-function withoutRows(rows: StudentEventRow[], excluded: Set<string>) {
-  return rows.filter((row) => !excluded.has(row.id));
+function withoutRows(rows: EventMapRow[], excluded: Set<string>) {
+  return rows.filter((row) => !row.id || !excluded.has(row.id));
 }
 
-function buildStudentEventSections(rows: StudentEventRow[], today: Date) {
-  const feedbackNeeded = rows.filter((row) => isFeedbackNeeded(row, today));
+function buildStudentEventSections(assignedRows: StudentEventRow[], availableRows: EventMapRow[]) {
+  const feedbackNeeded = assignedRows.filter(isFeedbackNeeded);
   const usedIds = new Set(feedbackNeeded.map((row) => row.id));
-  const recommended = withoutRows(rows, usedIds).filter((row) => row.priority === "required" || row.priority === "recommended");
+  const recommended = withoutRows(assignedRows, usedIds).filter(
+    (row) => row.priority === "required" || row.priority === "recommended"
+  );
 
   for (const row of recommended) {
-    usedIds.add(row.id);
-  }
-
-  const planned = withoutRows(rows, usedIds).filter((row) => row.status === "planned" || row.status === "selected");
-
-  for (const row of planned) {
-    usedIds.add(row.id);
+    if (row.id) {
+      usedIds.add(row.id);
+    }
   }
 
   return [
@@ -60,24 +58,26 @@ function buildStudentEventSections(rows: StudentEventRow[], today: Date) {
       rows: recommended
     },
     {
-      key: "planned",
-      title: "Запланированные и на подтверждение",
-      emptyText: "Пока нет мероприятий, ожидающих выбора или подтверждения.",
-      rows: planned
-    },
-    {
       key: "other",
       title: "Остальные мероприятия",
       emptyText: "Других мероприятий пока нет.",
-      rows: withoutRows(rows, usedIds)
+      rows: [...withoutRows(assignedRows, usedIds), ...availableRows]
     }
   ];
 }
 
-function StudentEventMapForFamily({ rows, curatorName }: { rows: StudentEventRow[]; curatorName?: string | null }) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const sections = buildStudentEventSections(rows, today);
+function StudentEventMapForFamily({
+  assignedRows,
+  availableRows,
+  studentId,
+  curatorName
+}: {
+  assignedRows: StudentEventRow[];
+  availableRows: EventMapRow[];
+  studentId: string;
+  curatorName?: string | null;
+}) {
+  const sections = buildStudentEventSections(assignedRows, availableRows);
 
   return (
     <section className="section">
@@ -97,6 +97,8 @@ function StudentEventMapForFamily({ rows, curatorName }: { rows: StudentEventRow
                 curatorName={curatorName}
                 priorityFirst
                 showCuratorComment={false}
+                showSelectionControls={section.key === "other"}
+                selectableStudentId={studentId}
               />
             </div>
           </div>
@@ -120,8 +122,17 @@ export default async function StudentPage({ params }: StudentPageProps) {
   const areasToCheck = parseJson<string[]>(strategy?.areasToCheckJson ?? "[]", []);
   const recommendedFormats = parseJson<string[]>(strategy?.recommendedFormatsJson ?? "[]", []);
   const canManageStudent = canManageStudents(user.role);
+  const approvedEvents = await getApprovedEvents();
+  const assignedEventIds = new Set(student.eventMap.map((item) => item.eventId));
+  const availableEventRows = approvedEvents
+    .filter((event) => !assignedEventIds.has(event.id))
+    .map((event) => ({
+      event,
+      status: "approved",
+      goalForStudent: event.goal
+    }));
   const eventRecommendations = canManageStudent
-    ? recommendEventsForStudent(student, await getApprovedEvents(), 5)
+    ? recommendEventsForStudent(student, approvedEvents, 5)
     : [];
 
   return (
@@ -164,7 +175,12 @@ export default async function StudentPage({ params }: StudentPageProps) {
           <StudentChangeHistory student={student} />
         </section>
       ) : (
-        <StudentEventMapForFamily rows={student.eventMap} curatorName={student.curatorName} />
+        <StudentEventMapForFamily
+          assignedRows={student.eventMap}
+          availableRows={availableEventRows}
+          studentId={student.id}
+          curatorName={student.curatorName}
+        />
       )}
 
       {canManageStudent ? (
