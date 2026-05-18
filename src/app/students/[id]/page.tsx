@@ -318,6 +318,7 @@ export default async function StudentPage({ params }: StudentPageProps) {
             rows={student.eventMap}
             emptyText="В карте пока нет назначенных мероприятий."
             showStatusControls
+            showSelectionReviewControls
             curatorName={student.curatorName}
             priorityFirst
           />

@@ -829,7 +829,6 @@ export async function selectEventForStudentAction(formData: FormData) {
     include: { event: { select: { title: true } } }
   });
   const recommendation = scoreEventForStudent(student, event);
-  const priority = recommendation.score >= 75 ? "required" : recommendation.score >= 35 ? "recommended" : "optional";
   const mapItem = await prisma.studentEventMap.upsert({
     where: {
       studentId_eventId: {
@@ -843,10 +842,10 @@ export async function selectEventForStudentAction(formData: FormData) {
     create: {
       studentId,
       eventId,
-      priority,
+      priority: "student_choice",
       status: "selected",
-      goalForStudent: recommendation.goalForStudent,
-      curatorComment: recommendation.curatorComment
+      goalForStudent: `Ученик выбрал мероприятие из общего списка. ${recommendation.goalForStudent}`,
+      curatorComment: null
     }
   });
   const afterState = await getStudentAuditState(studentId);
@@ -910,6 +909,115 @@ export async function selectEventForStudentAction(formData: FormData) {
   revalidatePath("/feedback");
   revalidatePath(`/students/${studentId}`);
   redirect(`/students/${studentId}`);
+}
+
+export async function reviewStudentEventSelectionAction(formData: FormData) {
+  const user = await requireUser();
+  const studentEventMapId = text(formData, "studentEventMapId");
+  const decision = text(formData, "decision");
+
+  if (!studentEventMapId || !["approved", "rejected"].includes(decision)) {
+    throw new Error("Некорректное решение по выбору мероприятия.");
+  }
+
+  if (!canManageStudents(user.role)) {
+    throw new Error("Недостаточно прав для согласования выбора ученика.");
+  }
+
+  const mapItem = await prisma.studentEventMap.findUnique({
+    where: { id: studentEventMapId },
+    include: {
+      student: true,
+      event: {
+        select: { id: true, title: true }
+      }
+    }
+  });
+
+  if (!mapItem) {
+    throw new Error("Мероприятие в карте не найдено.");
+  }
+
+  if (user.role !== "ADMIN" && mapItem.student.curatorId !== user.id) {
+    throw new Error("Можно согласовывать выбор только своих учеников.");
+  }
+
+  if (mapItem.status !== "selected" || mapItem.priority !== "student_choice") {
+    throw new Error("Это мероприятие не ожидает согласования выбора ученика.");
+  }
+
+  const beforeState = await getStudentAuditState(mapItem.studentId);
+
+  if (decision === "approved") {
+    await prisma.studentEventMap.update({
+      where: { id: studentEventMapId },
+      data: {
+        priority: "recommended",
+        status: "planned"
+      }
+    });
+  } else {
+    await prisma.studentEventMap.delete({
+      where: { id: studentEventMapId }
+    });
+  }
+
+  const afterState = await getStudentAuditState(mapItem.studentId);
+  const approved = decision === "approved";
+
+  await createAuditLog({
+    studentId: mapItem.studentId,
+    eventId: mapItem.eventId,
+    actorId: user.id,
+    action: approved ? "event_map.student_selection_approved" : "event_map.student_selection_rejected",
+    targetType: "event_map",
+    targetId: studentEventMapId,
+    source: "curator",
+    summary: approved
+      ? `Куратор согласовал выбор ученика: ${mapItem.event.title}.`
+      : `Куратор отклонил выбор ученика: ${mapItem.event.title}.`,
+    before: {
+      id: mapItem.id,
+      eventId: mapItem.eventId,
+      eventTitle: mapItem.event.title,
+      priority: mapItem.priority,
+      status: mapItem.status,
+      goalForStudent: mapItem.goalForStudent,
+      curatorComment: mapItem.curatorComment
+    },
+    after: pickStudentAuditTarget(afterState, "event_map"),
+    metadata: { decision }
+  });
+
+  await createStudentSnapshot({
+    studentId: mapItem.studentId,
+    actorId: user.id,
+    snapshotType: "event_map",
+    stage: "before",
+    source: "curator_review",
+    relatedType: "event",
+    relatedId: mapItem.eventId,
+    reason: "До решения куратора по выбору мероприятия учеником.",
+    state: beforeState
+  });
+
+  await createStudentSnapshot({
+    studentId: mapItem.studentId,
+    actorId: user.id,
+    snapshotType: "event_map",
+    stage: "after",
+    source: "curator_review",
+    relatedType: "event",
+    relatedId: mapItem.eventId,
+    reason: "После решения куратора по выбору мероприятия учеником.",
+    state: afterState
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/students");
+  revalidatePath("/events");
+  revalidatePath(`/students/${mapItem.studentId}`);
+  revalidatePath("/feedback");
 }
 
 export async function updateStudentEventStatusAction(formData: FormData) {

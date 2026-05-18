@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { CalendarDays, Check, ClipboardCheck, Footprints } from "lucide-react";
-import { selectEventForStudentAction, updateStudentEventStatusAction } from "@/app/actions";
+import { CalendarDays, Check, ClipboardCheck, Footprints, X } from "lucide-react";
+import { reviewStudentEventSelectionAction, selectEventForStudentAction, updateStudentEventStatusAction } from "@/app/actions";
 import { FormPendingNotice, SubmitButton } from "@/components/forms/SubmitButton";
 import { areaLabel, eventStatusLabels, eventTypeLabels, formatLabels, priorityLabels } from "@/lib/constants";
 import { formatDate, parseJson } from "@/lib/format";
@@ -35,6 +35,7 @@ type EventMapTimelineProps = {
   priorityFirst?: boolean;
   showCuratorComment?: boolean;
   showSelectionControls?: boolean;
+  showSelectionReviewControls?: boolean;
   selectableStudentId?: string;
 };
 
@@ -107,6 +108,10 @@ function statusForRow(row: EventMapRow, now: Date) {
     return "Доступно для выбора";
   }
 
+  if (status === "selected" && row.priority === "student_choice") {
+    return "На согласовании у куратора";
+  }
+
   if (status === "feedback_completed" || status === "completed") {
     return eventStatusLabels[status] ?? status;
   }
@@ -121,7 +126,8 @@ function statusForRow(row: EventMapRow, now: Date) {
 const priorityRank: Record<string, number> = {
   required: 0,
   recommended: 1,
-  optional: 2
+  student_choice: 2,
+  optional: 3
 };
 
 function sortRows(rows: EventMapRow[], priorityFirst: boolean) {
@@ -193,6 +199,7 @@ export function EventMapTimeline({
   priorityFirst = false,
   showCuratorComment = true,
   showSelectionControls = false,
+  showSelectionReviewControls = false,
   selectableStudentId
 }: EventMapTimelineProps) {
   if (rows.length === 0) {
@@ -223,7 +230,9 @@ export function EventMapTimeline({
                     const areas = parseJson<string[]>(row.event.professionalAreasJson, []);
                     const status = statusForRow(row, now);
                     const currentStatus = row.status ?? row.event.status;
-                    const canShowControls = showStatusControls && Boolean(row.id);
+                    const canReviewSelection =
+                      showSelectionReviewControls && Boolean(row.id) && row.status === "selected" && row.priority === "student_choice";
+                    const canShowControls = showStatusControls && Boolean(row.id) && !canReviewSelection;
                     const canSelectEvent = showSelectionControls && selectableStudentId && !row.id;
 
                     return (
@@ -309,6 +318,35 @@ export function EventMapTimeline({
                                   </form>
                                 );
                               })}
+                            </div>
+                          ) : null}
+
+                          {canReviewSelection ? (
+                            <div className="event-status-controls" aria-label={`Согласование выбора ${row.event.title}`}>
+                              <form action={reviewStudentEventSelectionAction}>
+                                <input name="studentEventMapId" type="hidden" value={row.id} />
+                                <input name="decision" type="hidden" value="approved" />
+                                <FormPendingNotice
+                                  title="Согласуем выбор"
+                                  description="Добавляем мероприятие в карту ученика как рекомендацию к посещению."
+                                />
+                                <SubmitButton className="status-step select-action" pendingText="Согласуем...">
+                                  <Check size={15} aria-hidden="true" />
+                                  <span>Одобрить выбор</span>
+                                </SubmitButton>
+                              </form>
+                              <form action={reviewStudentEventSelectionAction}>
+                                <input name="studentEventMapId" type="hidden" value={row.id} />
+                                <input name="decision" type="hidden" value="rejected" />
+                                <FormPendingNotice
+                                  title="Отклоняем выбор"
+                                  description="Убираем мероприятие из карты ученика и фиксируем решение в журнале."
+                                />
+                                <SubmitButton className="status-step" pendingText="Отклоняем...">
+                                  <X size={15} aria-hidden="true" />
+                                  <span>Отклонить</span>
+                                </SubmitButton>
+                              </form>
                             </div>
                           ) : null}
 

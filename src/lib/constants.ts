@@ -26,7 +26,8 @@ export const russianCities = [
 export const priorityLabels: Record<string, string> = {
   required: "Обязательное",
   recommended: "Рекомендуемое",
-  optional: "Дополнительное"
+  optional: "Дополнительное",
+  student_choice: "Выбор ученика"
 };
 
 export const eventStatusLabels: Record<string, string> = {

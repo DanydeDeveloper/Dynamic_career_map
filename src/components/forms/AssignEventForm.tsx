@@ -38,11 +38,13 @@ export function AssignEventForm({ students, events }: AssignEventFormProps) {
           <label htmlFor="priority">Приоритет</label>
           <select id="priority" name="priority" defaultValue="auto">
             <option value="auto">Авто по профилю</option>
-            {Object.entries(priorityLabels).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
+            {Object.entries(priorityLabels)
+              .filter(([key]) => key !== "student_choice")
+              .map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
           </select>
         </div>
         <div className="field full">
