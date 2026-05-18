@@ -103,6 +103,10 @@ function groupByMonth(rows: EventMapRow[]) {
 function statusForRow(row: EventMapRow, now: Date) {
   const status = row.status ?? row.event.status;
 
+  if (status === "available") {
+    return "Доступно для выбора";
+  }
+
   if (status === "feedback_completed" || status === "completed") {
     return eventStatusLabels[status] ?? status;
   }
@@ -316,7 +320,7 @@ export function EventMapTimeline({
                                 title="Мероприятие выбирается"
                                 description="Добавляем событие в карту, чтобы куратор увидел выбор."
                               />
-                              <SubmitButton className="status-step active" pendingText="Выбираем...">
+                              <SubmitButton className="status-step select-action" pendingText="Выбираем...">
                                 <Check size={15} aria-hidden="true" />
                                 <span>Выбрать</span>
                               </SubmitButton>

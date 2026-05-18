@@ -131,7 +131,7 @@ export default async function StudentPage({ params }: StudentPageProps) {
     .filter((event) => !assignedEventIds.has(event.id))
     .map((event) => ({
       event,
-      status: "approved",
+      status: "available",
       goalForStudent: event.goal
     }));
   const eventRecommendations = canManageStudent

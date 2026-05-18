@@ -782,6 +782,18 @@ textarea {
   color: var(--primary-strong);
 }
 
+.status-step.select-action {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.status-step.select-action:hover {
+  background: var(--primary-strong);
+  color: #ffffff;
+}
+
 .status-step.active,
 .status-step:disabled {
   border-color: var(--primary);
